@@ -1,0 +1,26 @@
+name: 'Slack Workflow Notifications'
+author: 'Anthony Kinson'
+description: 'A Github Action for sending Workflow run results to Slack'
+branding:
+  icon: message-square
+  color: blue
+inputs:
+  repo_token:
+    description: 'You must manually pass in secrets.GITHUB_TOKEN'
+    required: true
+  slack_webhook_url:
+    description: 'Your slack webhook url'
+    required: true
+  channel:
+    description: 'Override the default channel configured by the SLACK_WEBHOOK_URL'
+    required: false
+  name:
+    description: 'Override the default name configured by the Slack SLACK_WEBHOOK_URL'
+    required: false
+  include_jobs:
+    descrtiption: 'Should the slack notification include individual job status and run times'
+    required: true
+    default: true
+runs:
+  using: 'node12'
+  main: 'dist/index.js'

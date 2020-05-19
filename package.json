@@ -1,0 +1,40 @@
+{
+  "name": "slack-workflow-notifications",
+  "description": "A Github Action for sending Workflow run results to Slack",
+  "version": "1.0.0",
+  "author": "Anthony Kinson",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "private": true,
+  "bugs": {
+    "url": "https://github.com/Gamesight/slack-workflow-notifications/issues"
+  },
+  "homepage": "https://github.com/Gamesight/slack-workflow-notifications#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gamesight/slack-workflow-notifications.git"
+  },
+  "scripts": {
+    "build": "ncc build src/main.ts",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@actions/core": "^1.2.4",
+    "@actions/github": "^2.2.0",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.5",
+    "@types/request": "^2.48.1",
+    "@types/request-promise-native": "^1.0.15"
+  },
+  "devDependencies": {
+    "@types/jest": "^25.1.4",
+    "@zeit/ncc": "^0.22.0",
+    "husky": "^4.2.3",
+    "typescript": "^3.8.3"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run build && git add dist/"
+    }
+  }
+}
