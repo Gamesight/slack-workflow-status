@@ -3306,7 +3306,7 @@ __webpack_require__.r(__webpack_exports__);
  * Author: Anthony Kinson <anthony@gamesight.io>                              *
  * Repository: https://github.com/Gamesight/slack-workflow-status             *
  * License: MIT                                                               *
- * Copyright (c) 2020 Gamesight                                               *
+ * Copyright (c) 2020 Gamesight, Inc                                               *
 \******************************************************************************/
 
 
