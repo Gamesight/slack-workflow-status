@@ -17,6 +17,12 @@ inputs:
   name:
     description: 'Override the default name configured by the Slack SLACK_WEBHOOK_URL'
     required: false
+  icon_emoji:
+    description: 'Override the default webhook icon with an emoji. Uses emoji code: https://www.webfx.com/tools/emoji-cheat-sheet/'
+    required: false
+  icon_url:
+    description: 'Override the default webhook icon with an image via url.'
+    required: false
   include_jobs:
     descrtiption: 'Should the slack notification include individual job status and run times'
     required: true

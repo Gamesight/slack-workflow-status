@@ -3296,26 +3296,44 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var request_promise_native__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(117);
 /* harmony import */ var request_promise_native__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(request_promise_native__WEBPACK_IMPORTED_MODULE_2__);
+/******************************************************************************\
+ * Main entrypoint for GitHib Action. Fetches information regarding the       *
+ * currently running Workflow and it's Jobs. Sends individual job status and  *
+ * workflow status as a formatted notification to the Slack Webhhok URL set   *
+ * in the environment variables.                                              *
+ *                                                                            *
+ * Org: Gamesight <https://gamesight.io>                                      *
+ * Author: Anthony Kinson <anthony@gamesight.io>                              *
+ * Repository: https://github.com/Gamesight/slack-workflow-status             *
+ * License: MIT                                                               *
+ * Copyright (c) 2020 Gamesight, Inc                                               *
+\******************************************************************************/
 
 
 
 process.on('unhandledRejection', handleError);
 main().catch(handleError);
+// Action entrypoint
 async function main() {
-    // Collect action inputs
+    // Collect Action Inputs
     const webhook_url = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('slack_webhook_url', { required: true });
     const github_token = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('repo_token', { required: true });
+    const include_jobs = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('include_jobs', { required: true });
+    const slack_channel = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('channel');
+    const slack_name = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('name');
+    const slack_icon = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('icon_url');
+    const slack_emoji = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('icon_emoji'); // https://www.webfx.com/tools/emoji-cheat-sheet/
+    // Force as secret, forces *** when trying to print or log values
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret(github_token);
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret(webhook_url);
-    const run_id = Number(process.env.GITHUB_RUN_ID);
+    // Collect Environment Variables
     const workflow_name = process.env.GITHUB_WORKFLOW;
-    const include_jobs = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('include_jobs', { required: true });
+    const run_id = Number(process.env.GITHUB_RUN_ID);
     const actor = process.env.GITHUB_ACTOR;
     const event = process.env.GITHUB_EVENT_NAME;
     const ref = process.env.GITHUB_REF;
     const branch = ref.substr(ref.lastIndexOf('/') + 1);
-    const slack_channel = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('channel');
-    const slack_name = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('name');
+    // Auth github with octokit module
     const options = {};
     const github = new _actions_github__WEBPACK_IMPORTED_MODULE_1__.GitHub(github_token, options);
     // Fetch workflow run data
@@ -3324,16 +3342,9 @@ async function main() {
         repo: _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.repo.repo,
         run_id: run_id
     });
+    // Fetch workflow job information
     const jobs_response = await github.request(workflow_run.data.jobs_url);
-    // Setup PR String
-    let pull_requests = "";
-    for (let pull_request of workflow_run.data.pull_requests) {
-        pull_requests += ",<" + pull_request.url + "|#" + pull_request.number + ">";
-    }
-    if (pull_requests != "") {
-        pull_requests = "for " + pull_requests.substr(1) + " ";
-    }
-    // Build Slack Payload
+    // Build Job Data Fields and Workflow Status
     let job_fields = [];
     let workflow_success = true;
     let workflow_failure = false;
@@ -3365,10 +3376,10 @@ async function main() {
         });
     }
     // Configure slack attachment styling
-    let workflow_color = "";
+    let workflow_color = ""; // can be good, danger, warning or a HEX colour (#00FF00)
     let workflow_msg = "";
     if (workflow_success) {
-        workflow_color = "good"; // can be replaced with HEX values
+        workflow_color = "good";
         workflow_msg = "Success:";
     }
     else if (workflow_failure) {
@@ -3377,28 +3388,54 @@ async function main() {
     }
     else {
         workflow_color = "warning";
-        workflow_msg = "Cancelled: ";
+        workflow_msg = "Cancelled:";
     }
-    // create our slack payload
-    // We're using old style attachments rather than the new blocks because we don't
-    // get the notification color highlighting with blocks.
+    // Payload Formatting Shortcuts
+    const workflow_duration = job_duration(new Date(workflow_run.data.created_at), new Date(workflow_run.data.updated_at));
+    const repo_url = "<https://github.com/" + workflow_run.data.repository.full_name + "|*" + workflow_run.data.repository.full_name + "*>";
+    const branch_url = "<https://github.com/" + workflow_run.data.repository.full_name + "/tree/" + branch + "|*" + branch + "*>";
+    const workflow_run_url = "<" + workflow_run.data.html_url + "|#" + workflow_run.data.run_number + ">";
+    // Example: Success: AnthonyKinson's `push` on `master` for pull_request
+    let status_string = workflow_msg + " " + actor + "'s `" + event + "` on `" + branch_url + "`\n";
+    // Example: Workflow: My Workflow #14 completed in `1m 30s`
+    const details_string = "Workflow: " + workflow_name + " " + workflow_run_url + " completed in `" + workflow_duration + "`";
+    // Build Pull Request string if required
+    let pull_requests = "";
+    for (let pull_request of workflow_run.data.pull_requests) {
+        pull_requests += ", <" + pull_request.url + "|#" + pull_request.number + "> from `" + pull_request.head.ref + "` to `" + pull_request.base.ref + "`";
+    }
+    if (pull_requests != "") {
+        pull_requests = pull_requests.substr(1);
+        status_string = workflow_msg + " " + actor + "'s `pull_request`" + pull_requests + "\n";
+    }
+    // We're using old style attachments rather than the new blocks because:
+    // - Blocks don't allow colour indicators on messages
+    // - Block are limited to 10 fields. >10 jobs in a workflow results in payload failure
+    // Build our notification attachment
     const slack_attachment = {
         mrkdwn_in: ["text"],
         color: workflow_color,
-        text: workflow_msg + " " + actor + "'s " + event + " on " + branch + " " + pull_requests + "\nWorkflow: " + workflow_name + " <" + workflow_run.data.html_url + "|#" + workflow_run.data.run_number + "> completed in " + job_duration(new Date(workflow_run.data.created_at), new Date(workflow_run.data.updated_at)),
-        footer: "<https://github.com/" + workflow_run.data.repository.full_name + "|*" + workflow_run.data.repository.full_name + "*>",
+        text: status_string + details_string,
+        footer: repo_url,
         footer_icon: "https://github.githubassets.com/favicon.ico",
         fields: (include_jobs == 'true') ? job_fields : []
     };
+    // Build our notification payload
     const slack_payload_body = {
         attachments: [slack_attachment]
     };
-    // Add some overrides
+    // Do we have any overrides?
     if (slack_name != "") {
         slack_payload_body.username = slack_name;
     }
     if (slack_channel != "") {
         slack_payload_body.channel = slack_channel;
+    }
+    if (slack_emoji != "") {
+        slack_payload_body.icon_emoji = slack_emoji;
+    }
+    if (slack_icon != "") {
+        slack_payload_body.icon_url = slack_icon;
     }
     const request_options = {
         uri: webhook_url,
@@ -3406,7 +3443,6 @@ async function main() {
         body: slack_payload_body,
         json: true
     };
-    // await request(request_options)
     request_promise_native__WEBPACK_IMPORTED_MODULE_2__(request_options).catch(err => {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
     });
@@ -3424,9 +3460,9 @@ const job_duration = function (start, end) {
     let seconds = Math.floor(delta % 60);
     // Format duration sections
     const format_duration = function (value, text, hide_on_zero) {
-        return (value <= 0 && hide_on_zero) ? "" : value + text;
+        return (value <= 0 && hide_on_zero) ? "" : value + text + " ";
     };
-    return format_duration(days, "d", true) + format_duration(hours, "h", true) + format_duration(minutes, "m", true) + format_duration(seconds, "s", false);
+    return format_duration(days, "d", true) + format_duration(hours, "h", true) + format_duration(minutes, "m", true) + format_duration(seconds, "s", false).trim();
 };
 function handleError(err) {
     console.error(err);
