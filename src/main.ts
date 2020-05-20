@@ -132,24 +132,25 @@ async function main(){
     workflow_msg = "Cancelled:"
   }
 
-  // Build Pull Request string if required
-  let pull_requests = ""
-  for(let pull_request of workflow_run.data.pull_requests){
-    pull_requests += ",<"+ pull_request.url + "|#" + pull_request.number + ">"
-  }
-  if(pull_requests != ""){
-    pull_requests = "for " + pull_requests.substr(1) + " "
-  }
-
   // Payload Formatting Shortcuts
   const workflow_duration: string = job_duration(new Date(workflow_run.data.created_at), new Date(workflow_run.data.updated_at))
   const repo_url: string = "<https://github.com/" + workflow_run.data.repository.full_name + "|*"+ workflow_run.data.repository.full_name +"*>"
   const branch_url: string = "<https://github.com/"+workflow_run.data.repository.full_name+"/tree/"+branch+"|*"+branch+"*>"
   const workflow_run_url: string = "<"+workflow_run.data.html_url+"|#"+workflow_run.data.run_number+">"
   // Example: Success: AnthonyKinson's `push` on `master` for pull_request
-  const status_string: string = workflow_msg+" "+actor+"'s `"+event+"` on "+branch_url+" "+pull_requests+"\n"
+  let status_string: string = workflow_msg+" "+actor+"'s `"+event+"` on `"+branch_url+"`\n"
   // Example: Workflow: My Workflow #14 completed in `1m 30s`
   const details_string: string = "Workflow: "+workflow_name+" "+workflow_run_url+" completed in `"+ workflow_duration+"`"
+
+  // Build Pull Request string if required
+  let pull_requests = ""
+  for(let pull_request of workflow_run.data.pull_requests){
+    pull_requests += ", <"+ pull_request.url + "|#" + pull_request.number + "> from `"+pull_request.head.ref+"` to `"+pull_request.base.ref+"`"
+  }
+  if(pull_requests != ""){
+    pull_requests = pull_requests.substr(1)
+    status_string = workflow_msg+" "+actor+"'s `pull_request`"+pull_requests+"\n"
+  }
 
   // We're using old style attachments rather than the new blocks because:
   // - Blocks don't allow colour indicators on messages
