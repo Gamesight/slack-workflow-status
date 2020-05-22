@@ -5,41 +5,15 @@ This action will post workflow status notifications into your Slack channel. The
 
 ## Action Inputs
 
-### slack_webhook_url
-_`required`_
-
-Create a Slack Webhook URL using the [Incoming Webhooks App](https://slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0)
-It is recommended that youu create a new secret on your repo `SLACK_WEBHOOK_URL` for holding this value, and passing it to the action with `${{secrets.SLACK_WEBHOOK_URL}}`.
-
-### repo_token
-_`required`_
-
-A token is automatically available in your workflow secrets var. `${{secrets.GITHUB_TOKEN}}`. You can optionaly send an alternative self-generated token.
-
-### channel
-_`optional`_
-
-Accepts a Slack channel name where you would like the notifications to appear. Overrides the default channel created with your webhook.
-
-### name
-_`optional`_
-
-Allows you to provide a name for the slack bot user posting the notifications. Overrides the default name created with your webhook.
-
-### icon_emoji
-_`optional`_
-
-Allows you to provide an emoji as the slack bot user image when posting notifications. Overrides the default image created with your webhook. _[Emoji Code Cheat Sheet](https://www.webfx.com/tools/emoji-cheat-sheet/)_
-
-### icon_url
-_`optional`_
-
-Allows you to provide a url for an image to use as the slack bot user image when posting notifications. Overrides the default image created with your webhook.
-
-### include_jobs
-_`optional`_ _`default: true`_
-
-When set to `true`, individual job status and durations in the slack notification. When `false` only the event status and workflow status lines are included.
+| Name | Required | Description |
+| ---- | -------- | ----------- |
+| **slack_webhook_url** | _required_ | Create a Slack Webhook URL using the [Incoming Webhooks App](https://slack.com/apps/A0F7XDUAZ-incoming-webhooks?next_id=0). It is recommended that you create a new secret on your repo `SLACK_WEBHOOK_URL` for holding this value, and passing it to the action with `${{secrets.SLACK_WEBHOOK_URL}}`.
+| **repo_token** | _required_ | A token is automatically available in your workflow secrets var. `${{secrets.GITHUB_TOKEN}}`. You can optionally send an alternative self-generated token.
+| **channel** | _optional_ | Accepts a Slack channel name where you would like the notifications to appear. Overrides the default channel created with your webhook.
+| **name** | _optional_ | Allows you to provide a name for the slack bot user posting the notifications. Overrides the default name created with your webhook.
+| **icon_emoji** | _optional_ | Allows you to provide an emoji as the slack bot user image when posting notifications. Overrides the default image created with your webhook. _[Emoji Code Cheat Sheet](https://www.webfx.com/tools/emoji-cheat-sheet/)_
+| **icon_url** | _optional_ | Allows you to provide a URL for an image to use as the slack bot user image when posting notifications. Overrides the default image created with your webhook.
+| **include_jobs** | _optional_ | When set to `true`, individual job status and durations in the slack notification. When `false` only the event status and workflow status lines are included.
 
 ## Usage
 To use this action properly, you should create a new `job` at the end of your workflow that `needs` all other jobs in the workflow. This ensures that this action is only run once all jobs in your workflow are complete.
@@ -84,3 +58,6 @@ jobs:
 This action can also be used for Pull Request workflows and will include pull request information in the notification.
 
 <img src="./docs/images/example-pr.png" title="Slack Pull Request Example">
+
+
+_developed and maintained by: [gamesight.io](https://gamesight.io)_
