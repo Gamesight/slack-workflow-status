@@ -145,7 +145,7 @@ async function main(){
   // Build Pull Request string if required
   let pull_requests = ""
   for(let pull_request of workflow_run.data.pull_requests){
-    pull_requests += ", <"+ pull_request.url + "|#" + pull_request.number + "> from `"+pull_request.head.ref+"` to `"+pull_request.base.ref+"`"
+    pull_requests += ", <https://github.com/"+ workflow_run.data.repository.full_name + "/pull/" + pull_request.number + "|#" + pull_request.number + "> from `"+pull_request.head.ref+"` to `"+pull_request.base.ref+"`"
   }
   if(pull_requests != ""){
     pull_requests = pull_requests.substr(1)
