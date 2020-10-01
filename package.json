@@ -19,7 +19,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@actions/core": "^1.2.4",
+    "@actions/core": "^1.2.6",
     "@actions/github": "^2.2.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5",
