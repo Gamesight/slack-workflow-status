@@ -101,7 +101,7 @@ async function main(){
     }
     // If a job fails do concluide "success" then the workflow isn't successful
     // we assume it was cancelled unless...
-    if(job.conclusion != "success"){
+    if(job.conclusion == "cancelled"){
       workflow_success = false
       job_status_icon = "\u20e0" // COMBINING ENCLOSING CIRCLE BACKSLASH
     }
