@@ -19,8 +19,8 @@
     "test": "jest"
   },
   "dependencies": {
-    "@actions/core": "^1.2.6",
-    "@actions/github": "^2.2.0",
+    "@actions/core": ">= 1.2.6",
+    "@actions/github": ">= 4.0.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5",
     "@types/request": "^2.48.1",

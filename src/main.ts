@@ -12,7 +12,7 @@
 \******************************************************************************/
 
 import * as core from '@actions/core'
-import {context, GitHub} from '@actions/github'
+import {context, getOctokit} from '@actions/github'
 import * as request from 'request-promise-native'
 
 
@@ -49,6 +49,31 @@ interface SlackAttachmentFields {
   title?: string
 }
 
+// HACK: https://github.com/octokit/types.ts/issues/205
+interface PullRequest {
+  url: string
+  id: number
+  number: number
+  head: {
+    ref: string
+    sha: string
+    repo: {
+      id: number
+      url: string
+      name: string
+    }
+  }
+  base: {
+    ref: string
+    sha: string
+    repo: {
+      id: number
+      url: string
+      name: string
+    }
+  }
+}
+
 process.on('unhandledRejection', handleError)
 main().catch(handleError)
 
@@ -65,24 +90,23 @@ async function main(){
   // Force as secret, forces *** when trying to print or log values
   core.setSecret(github_token)
   core.setSecret(webhook_url)
-  // Collect Environment Variables
-  const workflow_name: string = process.env.GITHUB_WORKFLOW as string
-  const run_id: number = Number(process.env.GITHUB_RUN_ID)
-  const actor: string = process.env.GITHUB_ACTOR as string
-  const event: string = process.env.GITHUB_EVENT_NAME as string
-  const ref: string = process.env.GITHUB_REF as string
-  const branch: string = ref.substr(ref.lastIndexOf('/') + 1)
+  // Get branch
+  const branch: string = context.ref.substr(context.ref.lastIndexOf('/') + 1)
   // Auth github with octokit module
-  const options: {[key: string]: any} = {}
-  const github = new GitHub(github_token, options)
+  const octokit = getOctokit(github_token)
   // Fetch workflow run data
-  const workflow_run = await github.actions.getWorkflowRun({
+  const workflow_run = await octokit.actions.getWorkflowRun({
     owner: context.repo.owner,
     repo: context.repo.repo,
-    run_id: run_id
+    run_id: context.runId
   })
+
   // Fetch workflow job information
-  const jobs_response = await github.request(workflow_run.data.jobs_url)
+  const jobs_response = await octokit.actions.listJobsForWorkflowRun({
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+    run_id: context.runId
+  })
 
   // Build Job Data Fields and Workflow Status
   let job_fields: SlackAttachmentFields[] = []
@@ -138,18 +162,18 @@ async function main(){
   const branch_url: string = "<https://github.com/"+workflow_run.data.repository.full_name+"/tree/"+branch+"|*"+branch+"*>"
   const workflow_run_url: string = "<"+workflow_run.data.html_url+"|#"+workflow_run.data.run_number+">"
   // Example: Success: AnthonyKinson's `push` on `master` for pull_request
-  let status_string: string = workflow_msg+" "+actor+"'s `"+event+"` on `"+branch_url+"`\n"
+  let status_string: string = workflow_msg+" "+context.actor+"'s `"+context.eventName+"` on `"+branch_url+"`\n"
   // Example: Workflow: My Workflow #14 completed in `1m 30s`
-  const details_string: string = "Workflow: "+workflow_name+" "+workflow_run_url+" completed in `"+ workflow_duration+"`"
+  const details_string: string = "Workflow: "+context.workflow+" "+workflow_run_url+" completed in `"+ workflow_duration+"`"
 
   // Build Pull Request string if required
   let pull_requests = ""
-  for(let pull_request of workflow_run.data.pull_requests){
+  for(let pull_request of workflow_run.data.pull_requests as PullRequest[]){
     pull_requests += ", <https://github.com/"+ workflow_run.data.repository.full_name + "/pull/" + pull_request.number + "|#" + pull_request.number + "> from `"+pull_request.head.ref+"` to `"+pull_request.base.ref+"`"
   }
   if(pull_requests != ""){
     pull_requests = pull_requests.substr(1)
-    status_string = workflow_msg+" "+actor+"'s `pull_request`"+pull_requests+"\n"
+    status_string = workflow_msg+" "+context.actor+"'s `pull_request`"+pull_requests+"\n"
   }
 
   // We're using old style attachments rather than the new blocks because:
