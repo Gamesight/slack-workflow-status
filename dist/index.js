@@ -2032,13 +2032,9 @@ async function main() {
     // Example: Workflow: My Workflow #14 completed in `1m 30s`
     const details_string = "Workflow: " + _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.workflow + " " + workflow_run_url + " completed in `" + workflow_duration + "`";
     // Build Pull Request string if required
-    let pull_requests = "";
-    for (let pull_request of workflow_run.pull_requests) {
-        pull_requests += ", <https://github.com/" + workflow_run.repository.full_name + "/pull/" + pull_request.number + "|#" + pull_request.number + "> from `" + pull_request.head.ref + "` to `" + pull_request.base.ref + "`";
-    }
+    const pull_requests = workflow_run.pull_requests.map(pull_request => ("<https://github.com/" + workflow_run.repository.full_name + "/pull/" + pull_request.number + "|#" + pull_request.number + "> from `" + pull_request.head.ref + "` to `" + pull_request.base.ref + "`")).join(', ');
     if (pull_requests != "") {
-        pull_requests = pull_requests.substr(1);
-        status_string = workflow_msg + " " + _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.actor + "'s `pull_request`" + pull_requests + "\n";
+        status_string = workflow_msg + " " + _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.actor + "'s `pull_request` " + pull_requests + "\n";
     }
     // We're using old style attachments rather than the new blocks because:
     // - Blocks don't allow colour indicators on messages
