@@ -90,8 +90,6 @@ async function main(){
   // Force as secret, forces *** when trying to print or log values
   core.setSecret(github_token)
   core.setSecret(webhook_url)
-  // Get branch
-  const branch: string = context.ref.substr(context.ref.lastIndexOf('/') + 1)
   // Auth github with octokit module
   const octokit = getOctokit(github_token)
   // Fetch workflow run data
@@ -159,7 +157,7 @@ async function main(){
   // Payload Formatting Shortcuts
   const workflow_duration: string = job_duration(new Date(workflow_run.created_at), new Date(workflow_run.updated_at))
   const repo_url: string = "<https://github.com/" + workflow_run.repository.full_name + "|*"+ workflow_run.repository.full_name +"*>"
-  const branch_url: string = "<https://github.com/"+workflow_run.repository.full_name+"/tree/"+branch+"|*"+branch+"*>"
+  const branch_url: string = "<https://github.com/"+workflow_run.repository.full_name+"/tree/"+workflow_run.head_branch+"|*"+workflow_run.head_branch+"*>"
   const workflow_run_url: string = "<"+workflow_run.html_url+"|#"+workflow_run.run_number+">"
   // Example: Success: AnthonyKinson's `push` on `master` for pull_request
   let status_string: string = workflow_msg+" "+context.actor+"'s `"+context.eventName+"` on `"+branch_url+"`\n"
