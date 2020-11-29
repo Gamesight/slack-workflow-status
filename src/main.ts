@@ -110,7 +110,7 @@ async function main(){
   let job_fields: SlackAttachmentFields[] = []
   let workflow_success = true
   let workflow_failure = false
-  let job_status_icon = "\u2713"
+  let job_status_icon = "✓"
 
   for(let job of jobs_response.jobs){
     // Ignore the job that is running this action.
@@ -119,18 +119,18 @@ async function main(){
     }
     // Setup some slack content for job status
     if(job.conclusion == "success"){
-      job_status_icon = "\u2713" // CHECK MARK
+      job_status_icon = "✓"
     }
     // If a job fails do concluide "success" then the workflow isn't successful
     // we assume it was cancelled unless...
     if(job.conclusion != "success"){
       workflow_success = false
-      job_status_icon = "\u20e0" // COMBINING ENCLOSING CIRCLE BACKSLASH
+      job_status_icon = "⃠"
     }
     // ...the job conclusion is failure, we mark as failed and set the icon
     if(job.conclusion == "failure") {
       workflow_failure = true
-      job_status_icon = "\u2717" // BALLOT X
+      job_status_icon = "✗"
     }
     // Create a new field for this job
     job_fields.push({
