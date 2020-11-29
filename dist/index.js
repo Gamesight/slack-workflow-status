@@ -1985,52 +1985,43 @@ async function main() {
         repo: _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.repo.repo,
         run_id: _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.runId
     });
-    // Build Job Data Fields and Workflow Status
-    let job_fields = [];
-    let workflow_success = true;
-    let workflow_failure = false;
-    let job_status_icon = "✓";
-    for (let job of jobs_response.jobs) {
-        // Ignore the job that is running this action.
-        if (job.status != "completed") {
-            continue;
-        }
-        // Setup some slack content for job status
-        if (job.conclusion == "success") {
-            job_status_icon = "✓";
-        }
-        // If a job fails do concluide "success" then the workflow isn't successful
-        // we assume it was cancelled unless...
-        if (job.conclusion != "success") {
-            workflow_success = false;
-            job_status_icon = "⃠";
-        }
-        // ...the job conclusion is failure, we mark as failed and set the icon
-        if (job.conclusion == "failure") {
-            workflow_failure = true;
-            job_status_icon = "✗";
-        }
-        // Create a new field for this job
-        job_fields.push({
-            short: true,
-            value: job_status_icon + " <" + job.html_url + "|" + job.name + "> (" + job_duration(new Date(job.started_at), new Date(job.completed_at)) + ")"
-        });
-    }
+    const completed_jobs = jobs_response.jobs.filter(job => job.status === 'completed');
     // Configure slack attachment styling
-    let workflow_color = ""; // can be good, danger, warning or a HEX colour (#00FF00)
-    let workflow_msg = "";
-    if (workflow_success) {
-        workflow_color = "good";
-        workflow_msg = "Success:";
+    let workflow_color; // can be good, danger, warning or a HEX colour (#00FF00)
+    let workflow_msg;
+    if (completed_jobs.every(job => ['success', 'skipped'].includes(job.conclusion))) {
+        workflow_color = 'good';
+        workflow_msg = 'Success:';
     }
-    else if (workflow_failure) {
-        workflow_color = "danger";
-        workflow_msg = "Failed:";
+    else if (completed_jobs.some(job => job.conclusion === 'cancelled')) {
+        workflow_color = 'warning';
+        workflow_msg = 'Cancelled:';
     }
     else {
-        workflow_color = "warning";
-        workflow_msg = "Cancelled:";
+        // (jobs_response.jobs.some(job => job.conclusion === 'failed')
+        workflow_color = 'danger';
+        workflow_msg = 'Failed:';
     }
+    // Build Job Data Fields
+    const job_fields = completed_jobs.map(job => {
+        let job_status_icon;
+        switch (job.conclusion) {
+            case 'success':
+                job_status_icon = '✓';
+                break;
+            case 'cancelled':
+            case 'skipped':
+                job_status_icon = '⃠';
+                break;
+            default: // case 'failure'
+                job_status_icon = '✗';
+        }
+        return {
+            title: '',
+            short: true,
+            value: job_status_icon + " <" + job.html_url + "|" + job.name + "> (" + job_duration(new Date(job.started_at), new Date(job.completed_at)) + ")"
+        };
+    });
     // Payload Formatting Shortcuts
     const workflow_duration = job_duration(new Date(workflow_run.created_at), new Date(workflow_run.updated_at));
     const repo_url = "<https://github.com/" + workflow_run.repository.full_name + "|*" + workflow_run.repository.full_name + "*>";
