@@ -47,15 +47,15 @@ main().catch(handleError) // eslint-disable-line github/no-then
 // Action entrypoint
 async function main(): Promise<void> {
   // Collect Action Inputs
-  const webhook_url: string = core.getInput('slack_webhook_url', {
+  const webhook_url = core.getInput('slack_webhook_url', {
     required: true
   })
-  const github_token: string = core.getInput('repo_token', {required: true})
-  const include_jobs: string = core.getInput('include_jobs', {required: true})
-  const slack_channel: string = core.getInput('channel')
-  const slack_name: string = core.getInput('name')
-  const slack_icon: string = core.getInput('icon_url')
-  const slack_emoji: string = core.getInput('icon_emoji') // https://www.webfx.com/tools/emoji-cheat-sheet/
+  const github_token = core.getInput('repo_token', {required: true})
+  const include_jobs = core.getInput('include_jobs', {required: true})
+  const slack_channel = core.getInput('channel')
+  const slack_name = core.getInput('name')
+  const slack_icon = core.getInput('icon_url')
+  const slack_emoji = core.getInput('icon_emoji') // https://www.webfx.com/tools/emoji-cheat-sheet/
   // Force as secret, forces *** when trying to print or log values
   core.setSecret(github_token)
   core.setSecret(webhook_url)
@@ -80,8 +80,8 @@ async function main(): Promise<void> {
   )
 
   // Configure slack attachment styling
-  let workflow_color: string // can be good, danger, warning or a HEX colour (#00FF00)
-  let workflow_msg: string
+  let workflow_color // can be good, danger, warning or a HEX colour (#00FF00)
+  let workflow_msg
 
   if (
     completed_jobs.every(job => ['success', 'skipped'].includes(job.conclusion))
@@ -127,7 +127,7 @@ async function main(): Promise<void> {
   })
 
   // Payload Formatting Shortcuts
-  const workflow_duration: string = compute_duration({
+  const workflow_duration = compute_duration({
     start: new Date(workflow_run.created_at),
     end: new Date(workflow_run.updated_at)
   })
