@@ -149,8 +149,8 @@ async function main(): Promise<void> {
     start: new Date(workflow_run.created_at),
     end: new Date(workflow_run.updated_at)
   })
-  const repo_url = `<https://github.com/${workflow_run.repository.full_name}|*${workflow_run.repository.full_name}*>`
-  const branch_url = `<https://github.com/${workflow_run.repository.full_name}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`
+  const repo_url = `<${workflow_run.repository.html_url}|*${workflow_run.repository.full_name}*>`
+  const branch_url = `<${workflow_run.repository.html_url}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`
   const workflow_run_url = `<${workflow_run.html_url}|#${workflow_run.run_number}>`
   // Example: Success: AnthonyKinson's `push` on `master` for pull_request
   let status_string = `${workflow_msg} ${context.actor}'s \`${context.eventName}\` on \`${branch_url}\`\n`
@@ -161,7 +161,7 @@ async function main(): Promise<void> {
   const pull_requests = (workflow_run.pull_requests as PullRequest[])
     .map(
       pull_request =>
-        `<https://github.com/${workflow_run.repository.full_name}/pull/${pull_request.number}|#${pull_request.number}> from \`${pull_request.head.ref}\` to \`${pull_request.base.ref}\``
+        `<${workflow_run.repository.html_url}/pull/${pull_request.number}|#${pull_request.number}> from \`${pull_request.head.ref}\` to \`${pull_request.base.ref}\``
     )
     .join(', ')
 

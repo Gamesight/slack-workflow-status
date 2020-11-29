@@ -9415,8 +9415,8 @@ function main() {
             start: new Date(workflow_run.created_at),
             end: new Date(workflow_run.updated_at)
         });
-        const repo_url = `<https://github.com/${workflow_run.repository.full_name}|*${workflow_run.repository.full_name}*>`;
-        const branch_url = `<https://github.com/${workflow_run.repository.full_name}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`;
+        const repo_url = `<${workflow_run.repository.html_url}|*${workflow_run.repository.full_name}*>`;
+        const branch_url = `<${workflow_run.repository.html_url}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`;
         const workflow_run_url = `<${workflow_run.html_url}|#${workflow_run.run_number}>`;
         // Example: Success: AnthonyKinson's `push` on `master` for pull_request
         let status_string = `${workflow_msg} ${github_1.context.actor}'s \`${github_1.context.eventName}\` on \`${branch_url}\`\n`;
@@ -9424,7 +9424,7 @@ function main() {
         const details_string = `Workflow: ${github_1.context.workflow} ${workflow_run_url} completed in \`${workflow_duration}\``;
         // Build Pull Request string if required
         const pull_requests = workflow_run.pull_requests
-            .map(pull_request => `<https://github.com/${workflow_run.repository.full_name}/pull/${pull_request.number}|#${pull_request.number}> from \`${pull_request.head.ref}\` to \`${pull_request.base.ref}\``)
+            .map(pull_request => `<${workflow_run.repository.html_url}/pull/${pull_request.number}|#${pull_request.number}> from \`${pull_request.head.ref}\` to \`${pull_request.base.ref}\``)
             .join(', ');
         if (pull_requests !== '') {
             status_string = `${workflow_msg} ${github_1.context.actor}'s \`pull_request\` ${pull_requests}\n`;
