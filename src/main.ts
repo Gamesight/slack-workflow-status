@@ -114,21 +114,23 @@ async function main(): Promise<void> {
         job_status_icon = '✗'
     }
 
+    const job_duration = compute_duration({
+      start: new Date(job.started_at),
+      end: new Date(job.completed_at)
+    })
+
     return {
       title: '', // FIXME: it's required in slack type, we should workaround that somehow
       short: true,
-      value: `${job_status_icon} <${job.html_url}|${job.name}> (${job_duration(
-        new Date(job.started_at),
-        new Date(job.completed_at)
-      )})`
+      value: `${job_status_icon} <${job.html_url}|${job.name}> (${job_duration})`
     }
   })
 
   // Payload Formatting Shortcuts
-  const workflow_duration: string = job_duration(
-    new Date(workflow_run.created_at),
-    new Date(workflow_run.updated_at)
-  )
+  const workflow_duration: string = compute_duration({
+    start: new Date(workflow_run.created_at),
+    end: new Date(workflow_run.updated_at)
+  })
   const repo_url = `<https://github.com/${workflow_run.repository.full_name}|*${workflow_run.repository.full_name}*>`
   const branch_url = `<https://github.com/${workflow_run.repository.full_name}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`
   const workflow_run_url = `<${workflow_run.html_url}|#${workflow_run.run_number}>`
@@ -181,7 +183,7 @@ async function main(): Promise<void> {
 }
 
 // Converts start and end dates into a duration string
-function job_duration(start: Date, end: Date): string {
+function compute_duration({start, end}: {start: Date; end: Date}): string {
   // FIXME: https://github.com/microsoft/TypeScript/issues/2361
   const duration = end.valueOf() - start.valueOf()
   let delta = duration / 1000
