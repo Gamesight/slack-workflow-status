@@ -9334,7 +9334,9 @@ function main() {
             required: true
         });
         const github_token = core.getInput('repo_token', { required: true });
-        const include_jobs = core.getInput('include_jobs', { required: true });
+        const include_jobs = core.getInput('include_jobs', {
+            required: true
+        });
         const slack_channel = core.getInput('channel');
         const slack_name = core.getInput('name');
         const slack_icon = core.getInput('icon_url');
@@ -9360,21 +9362,31 @@ function main() {
         // Configure slack attachment styling
         let workflow_color; // can be good, danger, warning or a HEX colour (#00FF00)
         let workflow_msg;
+        let job_fields;
         if (completed_jobs.every(job => ['success', 'skipped'].includes(job.conclusion))) {
             workflow_color = 'good';
             workflow_msg = 'Success:';
+            if (include_jobs === 'on-failure') {
+                job_fields = [];
+            }
         }
         else if (completed_jobs.some(job => job.conclusion === 'cancelled')) {
             workflow_color = 'warning';
             workflow_msg = 'Cancelled:';
+            if (include_jobs === 'on-failure') {
+                job_fields = [];
+            }
         }
         else {
             // (jobs_response.jobs.some(job => job.conclusion === 'failed')
             workflow_color = 'danger';
             workflow_msg = 'Failed:';
         }
+        if (include_jobs === 'false') {
+            job_fields = [];
+        }
         // Build Job Data Fields
-        const job_fields = completed_jobs.map(job => {
+        job_fields !== null && job_fields !== void 0 ? job_fields : (job_fields = completed_jobs.map(job => {
             let job_status_icon;
             switch (job.conclusion) {
                 case 'success':
@@ -9397,7 +9409,7 @@ function main() {
                 short: true,
                 value: `${job_status_icon} <${job.html_url}|${job.name}> (${job_duration})`
             };
-        });
+        }));
         // Payload Formatting Shortcuts
         const workflow_duration = compute_duration({
             start: new Date(workflow_run.created_at),
@@ -9427,7 +9439,7 @@ function main() {
             text: status_string + details_string,
             footer: repo_url,
             footer_icon: 'https://github.githubassets.com/favicon.ico',
-            fields: include_jobs === 'true' ? job_fields : []
+            fields: job_fields
         };
         // Build our notification payload
         const slack_payload_body = Object.assign(Object.assign(Object.assign(Object.assign({ attachments: [slack_attachment] }, (slack_name && { username: slack_name })), (slack_channel && { channel: slack_channel })), (slack_emoji && { icon_emoji: slack_emoji })), (slack_icon && { icon_url: slack_icon }));

@@ -15,6 +15,7 @@ import * as core from '@actions/core'
 import {context, getOctokit} from '@actions/github'
 import {ActionsListJobsForWorkflowRunResponseData} from '@octokit/types'
 import {IncomingWebhook} from '@slack/webhook'
+import {MessageAttachment} from '@slack/types'
 
 // HACK: https://github.com/octokit/types.ts/issues/205
 interface PullRequest {
@@ -41,6 +42,9 @@ interface PullRequest {
   }
 }
 
+type IncludeJobs = 'true' | 'false' | 'on-failure'
+type SlackMessageAttachementFields = MessageAttachment['fields']
+
 process.on('unhandledRejection', handleError)
 main().catch(handleError) // eslint-disable-line github/no-then
 
@@ -51,7 +55,9 @@ async function main(): Promise<void> {
     required: true
   })
   const github_token = core.getInput('repo_token', {required: true})
-  const include_jobs = core.getInput('include_jobs', {required: true})
+  const include_jobs = core.getInput('include_jobs', {
+    required: true
+  }) as IncludeJobs
   const slack_channel = core.getInput('channel')
   const slack_name = core.getInput('name')
   const slack_icon = core.getInput('icon_url')
@@ -83,22 +89,34 @@ async function main(): Promise<void> {
   let workflow_color // can be good, danger, warning or a HEX colour (#00FF00)
   let workflow_msg
 
+  let job_fields: SlackMessageAttachementFields
+
   if (
     completed_jobs.every(job => ['success', 'skipped'].includes(job.conclusion))
   ) {
     workflow_color = 'good'
     workflow_msg = 'Success:'
+    if (include_jobs === 'on-failure') {
+      job_fields = []
+    }
   } else if (completed_jobs.some(job => job.conclusion === 'cancelled')) {
     workflow_color = 'warning'
     workflow_msg = 'Cancelled:'
+    if (include_jobs === 'on-failure') {
+      job_fields = []
+    }
   } else {
     // (jobs_response.jobs.some(job => job.conclusion === 'failed')
     workflow_color = 'danger'
     workflow_msg = 'Failed:'
   }
 
+  if (include_jobs === 'false') {
+    job_fields = []
+  }
+
   // Build Job Data Fields
-  const job_fields = completed_jobs.map(job => {
+  job_fields ??= completed_jobs.map(job => {
     let job_status_icon
 
     switch (job.conclusion) {
@@ -162,7 +180,7 @@ async function main(): Promise<void> {
     text: status_string + details_string,
     footer: repo_url,
     footer_icon: 'https://github.githubassets.com/favicon.ico',
-    fields: include_jobs === 'true' ? job_fields : []
+    fields: job_fields
   }
   // Build our notification payload
   const slack_payload_body = {
