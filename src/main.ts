@@ -159,13 +159,12 @@ async function main(){
   const details_string: string = "Workflow: "+context.workflow+" "+workflow_run_url+" completed in `"+ workflow_duration+"`"
 
   // Build Pull Request string if required
-  let pull_requests = ""
-  for(let pull_request of workflow_run.pull_requests as PullRequest[]){
-    pull_requests += ", <https://github.com/"+ workflow_run.repository.full_name + "/pull/" + pull_request.number + "|#" + pull_request.number + "> from `"+pull_request.head.ref+"` to `"+pull_request.base.ref+"`"
-  }
+  const pull_requests = (workflow_run.pull_requests as PullRequest[]).map(pull_request => (
+    "<https://github.com/"+ workflow_run.repository.full_name + "/pull/" + pull_request.number + "|#" + pull_request.number + "> from `"+pull_request.head.ref+"` to `"+pull_request.base.ref+"`"
+  )).join(', ')
+
   if(pull_requests != ""){
-    pull_requests = pull_requests.substr(1)
-    status_string = workflow_msg+" "+context.actor+"'s `pull_request`"+pull_requests+"\n"
+    status_string = workflow_msg+" "+context.actor+"'s `pull_request` "+pull_requests+"\n"
   }
 
   // We're using old style attachments rather than the new blocks because:
