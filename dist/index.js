@@ -1971,8 +1971,6 @@ async function main() {
     // Force as secret, forces *** when trying to print or log values
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret(github_token);
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret(webhook_url);
-    // Get branch
-    const branch = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.ref.substr(_actions_github__WEBPACK_IMPORTED_MODULE_1__.context.ref.lastIndexOf('/') + 1);
     // Auth github with octokit module
     const octokit = Object(_actions_github__WEBPACK_IMPORTED_MODULE_1__.getOctokit)(github_token);
     // Fetch workflow run data
@@ -2036,7 +2034,7 @@ async function main() {
     // Payload Formatting Shortcuts
     const workflow_duration = job_duration(new Date(workflow_run.created_at), new Date(workflow_run.updated_at));
     const repo_url = "<https://github.com/" + workflow_run.repository.full_name + "|*" + workflow_run.repository.full_name + "*>";
-    const branch_url = "<https://github.com/" + workflow_run.repository.full_name + "/tree/" + branch + "|*" + branch + "*>";
+    const branch_url = "<https://github.com/" + workflow_run.repository.full_name + "/tree/" + workflow_run.head_branch + "|*" + workflow_run.head_branch + "*>";
     const workflow_run_url = "<" + workflow_run.html_url + "|#" + workflow_run.run_number + ">";
     // Example: Success: AnthonyKinson's `push` on `master` for pull_request
     let status_string = workflow_msg + " " + _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.actor + "'s `" + _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.eventName + "` on `" + branch_url + "`\n";
