@@ -42,14 +42,16 @@ interface PullRequest {
 }
 
 process.on('unhandledRejection', handleError)
-main().catch(handleError)
+main().catch(handleError) // eslint-disable-line github/no-then
 
 // Action entrypoint
-async function main(){
+async function main(): Promise<void> {
   // Collect Action Inputs
-  const webhook_url: string = core.getInput('slack_webhook_url', { required: true })
-  const github_token: string = core.getInput('repo_token', { required: true })
-  const include_jobs: string = core.getInput('include_jobs', { required: true })
+  const webhook_url: string = core.getInput('slack_webhook_url', {
+    required: true
+  })
+  const github_token: string = core.getInput('repo_token', {required: true})
+  const include_jobs: string = core.getInput('include_jobs', {required: true})
   const slack_channel: string = core.getInput('channel')
   const slack_name: string = core.getInput('name')
   const slack_icon: string = core.getInput('icon_url')
@@ -73,13 +75,17 @@ async function main(){
     run_id: context.runId
   })
 
-  const completed_jobs = jobs_response.jobs.filter(job => job.status === 'completed')
+  const completed_jobs = jobs_response.jobs.filter(
+    job => job.status === 'completed'
+  )
 
   // Configure slack attachment styling
-  let workflow_color: string  // can be good, danger, warning or a HEX colour (#00FF00)
+  let workflow_color: string // can be good, danger, warning or a HEX colour (#00FF00)
   let workflow_msg: string
 
-  if (completed_jobs.every(job => ['success', 'skipped'].includes(job.conclusion))) {
+  if (
+    completed_jobs.every(job => ['success', 'skipped'].includes(job.conclusion))
+  ) {
     workflow_color = 'good'
     workflow_msg = 'Success:'
   } else if (completed_jobs.some(job => job.conclusion === 'cancelled')) {
@@ -103,34 +109,44 @@ async function main(){
       case 'skipped':
         job_status_icon = '⃠'
         break
-      default: // case 'failure'
+      default:
+        // case 'failure'
         job_status_icon = '✗'
     }
 
     return {
       title: '', // FIXME: it's required in slack type, we should workaround that somehow
       short: true,
-      value: job_status_icon + " <" + job.html_url + "|" + job.name + "> (" + job_duration(new Date(job.started_at), new Date(job.completed_at)) + ")"
+      value: `${job_status_icon} <${job.html_url}|${job.name}> (${job_duration(
+        new Date(job.started_at),
+        new Date(job.completed_at)
+      )})`
     }
   })
 
   // Payload Formatting Shortcuts
-  const workflow_duration: string = job_duration(new Date(workflow_run.created_at), new Date(workflow_run.updated_at))
-  const repo_url: string = "<https://github.com/" + workflow_run.repository.full_name + "|*"+ workflow_run.repository.full_name +"*>"
-  const branch_url: string = "<https://github.com/"+workflow_run.repository.full_name+"/tree/"+workflow_run.head_branch+"|*"+workflow_run.head_branch+"*>"
-  const workflow_run_url: string = "<"+workflow_run.html_url+"|#"+workflow_run.run_number+">"
+  const workflow_duration: string = job_duration(
+    new Date(workflow_run.created_at),
+    new Date(workflow_run.updated_at)
+  )
+  const repo_url = `<https://github.com/${workflow_run.repository.full_name}|*${workflow_run.repository.full_name}*>`
+  const branch_url = `<https://github.com/${workflow_run.repository.full_name}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`
+  const workflow_run_url = `<${workflow_run.html_url}|#${workflow_run.run_number}>`
   // Example: Success: AnthonyKinson's `push` on `master` for pull_request
-  let status_string: string = workflow_msg+" "+context.actor+"'s `"+context.eventName+"` on `"+branch_url+"`\n"
+  let status_string = `${workflow_msg} ${context.actor}'s \`${context.eventName}\` on \`${branch_url}\`\n`
   // Example: Workflow: My Workflow #14 completed in `1m 30s`
-  const details_string: string = "Workflow: "+context.workflow+" "+workflow_run_url+" completed in `"+ workflow_duration+"`"
+  const details_string = `Workflow: ${context.workflow} ${workflow_run_url} completed in \`${workflow_duration}\``
 
   // Build Pull Request string if required
-  const pull_requests = (workflow_run.pull_requests as PullRequest[]).map(pull_request => (
-    "<https://github.com/"+ workflow_run.repository.full_name + "/pull/" + pull_request.number + "|#" + pull_request.number + "> from `"+pull_request.head.ref+"` to `"+pull_request.base.ref+"`"
-  )).join(', ')
+  const pull_requests = (workflow_run.pull_requests as PullRequest[])
+    .map(
+      pull_request =>
+        `<https://github.com/${workflow_run.repository.full_name}/pull/${pull_request.number}|#${pull_request.number}> from \`${pull_request.head.ref}\` to \`${pull_request.base.ref}\``
+    )
+    .join(', ')
 
-  if(pull_requests != ""){
-    status_string = workflow_msg+" "+context.actor+"'s `pull_request` "+pull_requests+"\n"
+  if (pull_requests !== '') {
+    status_string = `${workflow_msg} ${context.actor}'s \`pull_request\` ${pull_requests}\n`
   }
 
   // We're using old style attachments rather than the new blocks because:
@@ -139,12 +155,12 @@ async function main(){
 
   // Build our notification attachment
   const slack_attachment = {
-    mrkdwn_in: ["text" as const],
+    mrkdwn_in: ['text' as const],
     color: workflow_color,
     text: status_string + details_string,
     footer: repo_url,
-    footer_icon: "https://github.githubassets.com/favicon.ico",
-    fields: (include_jobs == 'true') ? job_fields : []
+    footer_icon: 'https://github.githubassets.com/favicon.ico',
+    fields: include_jobs === 'true' ? job_fields : []
   }
   // Build our notification payload
   const slack_payload_body = {
@@ -165,28 +181,37 @@ async function main(){
 }
 
 // Converts start and end dates into a duration string
-const job_duration = function(start: any, end: any){
-  const duration = end - start
+function job_duration(start: Date, end: Date): string {
+  // FIXME: https://github.com/microsoft/TypeScript/issues/2361
+  const duration = end.valueOf() - start.valueOf()
   let delta = duration / 1000
-  let days = Math.floor(delta / 86400)
+  const days = Math.floor(delta / 86400)
   delta -= days * 86400
-  let hours = Math.floor(delta / 3600) % 24
+  const hours = Math.floor(delta / 3600) % 24
   delta -= hours * 3600
-  let minutes = Math.floor(delta / 60) % 60
+  const minutes = Math.floor(delta / 60) % 60
   delta -= minutes * 60
-  let seconds = Math.floor(delta % 60)
+  const seconds = Math.floor(delta % 60)
   // Format duration sections
-  const format_duration = function(value: number, text: string, hide_on_zero: boolean): string {
-    return (value <= 0 && hide_on_zero) ? "" : value + text + " "
-  }
-  return format_duration(days, "d", true) + format_duration(hours, "h", true) + format_duration(minutes, "m", true) + format_duration(seconds, "s", false).trim()
+  const format_duration = (
+    value: number,
+    text: string,
+    hide_on_zero: boolean
+  ): string => (value <= 0 && hide_on_zero ? '' : `${value}${text} `)
+
+  return (
+    format_duration(days, 'd', true) +
+    format_duration(hours, 'h', true) +
+    format_duration(minutes, 'm', true) +
+    format_duration(seconds, 's', false).trim()
+  )
 }
 
-function handleError(err: any){
-  console.error(err)
-  if(err && err.message){
+function handleError(err: Error): void {
+  core.error(err)
+  if (err && err.message) {
     core.setFailed(err.message)
-  }else{
+  } else {
     core.setFailed(`Unhandled Error: ${err}`)
   }
 }
