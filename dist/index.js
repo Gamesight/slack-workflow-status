@@ -9290,7 +9290,7 @@ function wrappy (fn, cb) {
  * Author: Anthony Kinson <anthony@gamesight.io>                              *
  * Repository: https://github.com/Gamesight/slack-workflow-status             *
  * License: MIT                                                               *
- * Copyright (c) 2020 Gamesight, Inc                                               *
+ * Copyright (c) 2020 Gamesight, Inc                                          *
 \******************************************************************************/
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
