@@ -14,41 +14,7 @@
 import * as core from '@actions/core'
 import {context, getOctokit} from '@actions/github'
 import {ActionsListJobsForWorkflowRunResponseData} from '@octokit/types'
-import * as request from 'request-promise-native'
-
-
-interface SlackPayloadBody {
-    channel?: string,
-    username?: string,
-    icon_emoji?: string,
-    icon_url?: string,
-    attachments: SlackAttachment[]
-}
-
-interface SlackAttachment {
-  mrkdwn_in: [string]
-  color: string
-  text: string
-  footer: string
-  footer_icon: string
-  fields: SlackAttachmentFields[]
-  author_icon?: string
-  author_link?: string
-  author_name?: string
-  fallback?: string
-  image_url?: string
-  pretext?: string
-  thumb_url?: string
-  title?: string
-  title_link?: string
-  ts?: number
-}
-
-interface SlackAttachmentFields {
-  short: boolean
-  value: string
-  title?: string
-}
+import {IncomingWebhook} from '@slack/webhook'
 
 // HACK: https://github.com/octokit/types.ts/issues/205
 interface PullRequest {
@@ -172,8 +138,8 @@ async function main(){
   // - Block are limited to 10 fields. >10 jobs in a workflow results in payload failure
 
   // Build our notification attachment
-  const slack_attachment: SlackAttachment = {
-    mrkdwn_in: ["text"],
+  const slack_attachment = {
+    mrkdwn_in: ["text" as const],
     color: workflow_color,
     text: status_string + details_string,
     footer: repo_url,
@@ -181,34 +147,21 @@ async function main(){
     fields: (include_jobs == 'true') ? job_fields : []
   }
   // Build our notification payload
-  const slack_payload_body: SlackPayloadBody = {
-    attachments: [slack_attachment]
+  const slack_payload_body = {
+    attachments: [slack_attachment],
+    ...(slack_name && {username: slack_name}),
+    ...(slack_channel && {channel: slack_channel}),
+    ...(slack_emoji && {icon_emoji: slack_emoji}),
+    ...(slack_icon && {icon_url: slack_icon})
   }
 
-  // Do we have any overrides?
-  if(slack_name != ""){
-    slack_payload_body.username = slack_name
-  }
-  if(slack_channel != ""){
-    slack_payload_body.channel = slack_channel
-  }
-  if(slack_emoji != ""){
-    slack_payload_body.icon_emoji = slack_emoji
-  }
-  if(slack_icon != ""){
-    slack_payload_body.icon_url = slack_icon
-  }
+  const slack_webhook = new IncomingWebhook(webhook_url)
 
-  const request_options = {
-    uri: webhook_url,
-    method: 'POST',
-    body: slack_payload_body,
-    json: true
+  try {
+    await slack_webhook.send(slack_payload_body)
+  } catch (e) {
+    core.setFailed(e)
   }
-
-  request(request_options).catch(err => {
-    core.setFailed(err)
-  })
 }
 
 // Converts start and end dates into a duration string
