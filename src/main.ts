@@ -8,7 +8,7 @@
  * Author: Anthony Kinson <anthony@gamesight.io>                              *
  * Repository: https://github.com/Gamesight/slack-workflow-status             *
  * License: MIT                                                               *
- * Copyright (c) 2020 Gamesight, Inc                                               *
+ * Copyright (c) 2020 Gamesight, Inc                                          *
 \******************************************************************************/
 
 import * as core from '@actions/core'

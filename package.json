@@ -5,7 +5,7 @@
   "author": "Anthony Kinson",
   "license": "MIT",
   "main": "dist/index.js",
-  "private": true,
+  "private": false,
   "bugs": {
     "url": "https://github.com/Gamesight/slack-workflow-notifications/issues"
   },
