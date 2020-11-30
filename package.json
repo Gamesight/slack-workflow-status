@@ -16,6 +16,7 @@
   },
   "scripts": {
     "build": "ncc build src/main.ts",
+    "lint": "eslint src/main.ts",
     "test": "jest"
   },
   "dependencies": {
@@ -36,7 +37,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run build && git add dist/"
+      "pre-commit": "npm run lint && npm run build && git add dist/"
     }
   }
 }

@@ -9325,12 +9325,14 @@ const core = __importStar(__webpack_require__(2186));
 const github_1 = __webpack_require__(5438);
 const webhook_1 = __webpack_require__(1095);
 process.on('unhandledRejection', handleError);
-main().catch(handleError);
+main().catch(handleError); // eslint-disable-line github/no-then
 // Action entrypoint
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         // Collect Action Inputs
-        const webhook_url = core.getInput('slack_webhook_url', { required: true });
+        const webhook_url = core.getInput('slack_webhook_url', {
+            required: true
+        });
         const github_token = core.getInput('repo_token', { required: true });
         const include_jobs = core.getInput('include_jobs', { required: true });
         const slack_channel = core.getInput('channel');
@@ -9382,40 +9384,43 @@ function main() {
                 case 'skipped':
                     job_status_icon = '⃠';
                     break;
-                default: // case 'failure'
+                default:
+                    // case 'failure'
                     job_status_icon = '✗';
             }
             return {
                 title: '',
                 short: true,
-                value: job_status_icon + " <" + job.html_url + "|" + job.name + "> (" + job_duration(new Date(job.started_at), new Date(job.completed_at)) + ")"
+                value: `${job_status_icon} <${job.html_url}|${job.name}> (${job_duration(new Date(job.started_at), new Date(job.completed_at))})`
             };
         });
         // Payload Formatting Shortcuts
         const workflow_duration = job_duration(new Date(workflow_run.created_at), new Date(workflow_run.updated_at));
-        const repo_url = "<https://github.com/" + workflow_run.repository.full_name + "|*" + workflow_run.repository.full_name + "*>";
-        const branch_url = "<https://github.com/" + workflow_run.repository.full_name + "/tree/" + workflow_run.head_branch + "|*" + workflow_run.head_branch + "*>";
-        const workflow_run_url = "<" + workflow_run.html_url + "|#" + workflow_run.run_number + ">";
+        const repo_url = `<https://github.com/${workflow_run.repository.full_name}|*${workflow_run.repository.full_name}*>`;
+        const branch_url = `<https://github.com/${workflow_run.repository.full_name}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`;
+        const workflow_run_url = `<${workflow_run.html_url}|#${workflow_run.run_number}>`;
         // Example: Success: AnthonyKinson's `push` on `master` for pull_request
-        let status_string = workflow_msg + " " + github_1.context.actor + "'s `" + github_1.context.eventName + "` on `" + branch_url + "`\n";
+        let status_string = `${workflow_msg} ${github_1.context.actor}'s \`${github_1.context.eventName}\` on \`${branch_url}\`\n`;
         // Example: Workflow: My Workflow #14 completed in `1m 30s`
-        const details_string = "Workflow: " + github_1.context.workflow + " " + workflow_run_url + " completed in `" + workflow_duration + "`";
+        const details_string = `Workflow: ${github_1.context.workflow} ${workflow_run_url} completed in \`${workflow_duration}\``;
         // Build Pull Request string if required
-        const pull_requests = workflow_run.pull_requests.map(pull_request => ("<https://github.com/" + workflow_run.repository.full_name + "/pull/" + pull_request.number + "|#" + pull_request.number + "> from `" + pull_request.head.ref + "` to `" + pull_request.base.ref + "`")).join(', ');
-        if (pull_requests != "") {
-            status_string = workflow_msg + " " + github_1.context.actor + "'s `pull_request` " + pull_requests + "\n";
+        const pull_requests = workflow_run.pull_requests
+            .map(pull_request => `<https://github.com/${workflow_run.repository.full_name}/pull/${pull_request.number}|#${pull_request.number}> from \`${pull_request.head.ref}\` to \`${pull_request.base.ref}\``)
+            .join(', ');
+        if (pull_requests !== '') {
+            status_string = `${workflow_msg} ${github_1.context.actor}'s \`pull_request\` ${pull_requests}\n`;
         }
         // We're using old style attachments rather than the new blocks because:
         // - Blocks don't allow colour indicators on messages
         // - Block are limited to 10 fields. >10 jobs in a workflow results in payload failure
         // Build our notification attachment
         const slack_attachment = {
-            mrkdwn_in: ["text"],
+            mrkdwn_in: ['text'],
             color: workflow_color,
             text: status_string + details_string,
             footer: repo_url,
-            footer_icon: "https://github.githubassets.com/favicon.ico",
-            fields: (include_jobs == 'true') ? job_fields : []
+            footer_icon: 'https://github.githubassets.com/favicon.ico',
+            fields: include_jobs === 'true' ? job_fields : []
         };
         // Build our notification payload
         const slack_payload_body = Object.assign(Object.assign(Object.assign(Object.assign({ attachments: [slack_attachment] }, (slack_name && { username: slack_name })), (slack_channel && { channel: slack_channel })), (slack_emoji && { icon_emoji: slack_emoji })), (slack_icon && { icon_url: slack_icon }));
@@ -9429,24 +9434,26 @@ function main() {
     });
 }
 // Converts start and end dates into a duration string
-const job_duration = function (start, end) {
-    const duration = end - start;
+function job_duration(start, end) {
+    // FIXME: https://github.com/microsoft/TypeScript/issues/2361
+    const duration = end.valueOf() - start.valueOf();
     let delta = duration / 1000;
-    let days = Math.floor(delta / 86400);
+    const days = Math.floor(delta / 86400);
     delta -= days * 86400;
-    let hours = Math.floor(delta / 3600) % 24;
+    const hours = Math.floor(delta / 3600) % 24;
     delta -= hours * 3600;
-    let minutes = Math.floor(delta / 60) % 60;
+    const minutes = Math.floor(delta / 60) % 60;
     delta -= minutes * 60;
-    let seconds = Math.floor(delta % 60);
+    const seconds = Math.floor(delta % 60);
     // Format duration sections
-    const format_duration = function (value, text, hide_on_zero) {
-        return (value <= 0 && hide_on_zero) ? "" : value + text + " ";
-    };
-    return format_duration(days, "d", true) + format_duration(hours, "h", true) + format_duration(minutes, "m", true) + format_duration(seconds, "s", false).trim();
-};
+    const format_duration = (value, text, hide_on_zero) => (value <= 0 && hide_on_zero ? '' : `${value}${text} `);
+    return (format_duration(days, 'd', true) +
+        format_duration(hours, 'h', true) +
+        format_duration(minutes, 'm', true) +
+        format_duration(seconds, 's', false).trim());
+}
 function handleError(err) {
-    console.error(err);
+    core.error(err);
     if (err && err.message) {
         core.setFailed(err.message);
     }
