@@ -92,7 +92,7 @@ async function main(){
 
   for(let job of jobs_response.data.jobs){
     // Ignore the job that is running this action.
-    if(job.status != "completed"){
+    if(job.status != "completed" || job.conclusion == "skipped"){
       continue
     }
     // Setup some slack content for job status
