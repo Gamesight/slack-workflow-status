@@ -3510,7 +3510,7 @@ async function main() {
     if (slack_icon != "") {
         slack_payload_body.icon_url = slack_icon;
     }
-    if (slack_icon != "") {
+    if (slack_text != "") {
         slack_payload_body.text = slack_text;
     }
     if (slack_icon != "") {
