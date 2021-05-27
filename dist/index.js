@@ -3356,7 +3356,7 @@ async function main() {
     const slack_icon = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("icon_url");
     const slack_emoji = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("icon_emoji"); // https://www.webfx.com/tools/emoji-cheat-sheet/
     const slack_text = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("text");
-    const unfurl_links = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("unfurl_links") == "true";
+    const slack_unfurl_links = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("unfurl_links") == "true";
     // Force as secret, forces *** when trying to print or log values
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret(github_token);
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setSecret(webhook_url);
@@ -3514,7 +3514,7 @@ async function main() {
         slack_payload_body.text = slack_text;
     }
     if (slack_icon != "") {
-        slack_payload_body.unfurl_links = unfurl_links;
+        slack_payload_body.unfurl_links = slack_unfurl_links;
     }
     const request_options = {
         uri: webhook_url,

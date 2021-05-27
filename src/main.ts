@@ -68,7 +68,7 @@ async function main() {
   const slack_icon: string = core.getInput("icon_url");
   const slack_emoji: string = core.getInput("icon_emoji"); // https://www.webfx.com/tools/emoji-cheat-sheet/
   const slack_text: string = core.getInput("text");
-  const unfurl_links: boolean = core.getInput("unfurl_links") == "true";
+  const slack_unfurl_links: boolean = core.getInput("unfurl_links") == "true";
 
   // Force as secret, forces *** when trying to print or log values
   core.setSecret(github_token);
@@ -244,7 +244,7 @@ async function main() {
     slack_payload_body.text = slack_text;
   }
   if (slack_icon != "") {
-    slack_payload_body.unfurl_links = unfurl_links;
+    slack_payload_body.unfurl_links = slack_unfurl_links;
   }
 
   const request_options = {
