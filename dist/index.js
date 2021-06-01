@@ -3461,7 +3461,7 @@ async function main() {
         workflow_duration +
         "`";
     // Build Pull Request string if required
-    // ここがメッセージできている
+    // ここからメッセージ作成されている
     let pull_requests = "";
     for (let pull_request of workflow_run.data.pull_requests) {
         pull_requests +=
