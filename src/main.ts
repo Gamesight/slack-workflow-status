@@ -187,6 +187,7 @@ async function main() {
     "`";
 
   // Build Pull Request string if required
+  // ここがメッセージできている
   let pull_requests = "";
   for (let pull_request of workflow_run.data.pull_requests) {
     pull_requests +=
@@ -195,12 +196,7 @@ async function main() {
       "/pull/" +
       pull_request.number +
       "|#" +
-      pull_request.number +
-      "> from `" +
-      pull_request.head.ref +
-      "` to `" +
-      pull_request.base.ref +
-      "`";
+      pull_request.number;
   }
   if (pull_requests != "") {
     pull_requests = pull_requests.substr(1);
