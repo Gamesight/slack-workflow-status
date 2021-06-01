@@ -3469,12 +3469,7 @@ async function main() {
                 "/pull/" +
                 pull_request.number +
                 "|#" +
-                pull_request.number +
-                "> from `" +
-                pull_request.head.ref +
-                "` to `" +
-                pull_request.base.ref +
-                "`";
+                pull_request.number;
     }
     if (pull_requests != "") {
         pull_requests = pull_requests.substr(1);
