@@ -3470,7 +3470,8 @@ async function main() {
                 "/pull/" +
                 pull_request.number +
                 "|#" +
-                pull_request.number;
+                pull_request.number +
+                ">`";
     }
     if (pull_requests != "") {
         pull_requests = pull_requests.substr(1);
