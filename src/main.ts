@@ -187,6 +187,7 @@ async function main() {
     "`";
 
   // Build Pull Request string if required
+  // ここがメッセージできている
   let pull_requests = "";
   for (let pull_request of workflow_run.data.pull_requests) {
     pull_requests +=
