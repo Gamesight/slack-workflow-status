@@ -177,6 +177,7 @@ async function main() {
   let status_string: string =
     workflow_msg + " " + actor + "'s `" + event + "` on `" + branch_url + "`\n";
   // Example: Workflow: My Workflow #14 completed in `1m 30s`
+  // 現在のリリース通知に関しては要らないため、ここで定義しているが使っていない。
   const details_string: string =
     "Workflow: " +
     workflow_name +
@@ -196,7 +197,7 @@ async function main() {
       "/pull/" +
       pull_request.number +
       "|#" +
-      "*PRページ*" +
+      "*🗒PRページ*" +
       ">";
   }
   if (pull_requests != "") {
@@ -213,7 +214,7 @@ async function main() {
   const slack_attachment: SlackAttachment = {
     mrkdwn_in: ["text"],
     color: workflow_color,
-    text: status_string + details_string,
+    text: status_string,
     footer: repo_url,
     footer_icon: "https://github.githubassets.com/favicon.ico",
     fields: include_jobs == "true" ? job_fields : [],
