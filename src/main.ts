@@ -13,7 +13,6 @@
 
 import * as core from '@actions/core'
 import {context, getOctokit} from '@actions/github'
-import {ActionsListJobsForWorkflowRunResponseData} from '@octokit/types'
 import {IncomingWebhook} from '@slack/webhook'
 import {MessageAttachment} from '@slack/types'
 
@@ -195,8 +194,10 @@ async function main(): Promise<void> {
 
   try {
     await slack_webhook.send(slack_payload_body)
-  } catch (e) {
-    core.setFailed(e)
+  } catch (err) {
+    if (err instanceof Error) {
+      core.setFailed(err.message)
+    }
   }
 }
 
