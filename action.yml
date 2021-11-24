@@ -24,9 +24,9 @@ inputs:
     description: 'Override the default webhook icon with an image via url.'
     required: false
   include_jobs:
-    descrtiption: 'Should the slack notification include individual job status and run times'
+    description: 'Should the slack notification include individual job status and run times'
     required: true
-    default: true
+    default: "true"
 runs:
   using: 'node12'
   main: 'dist/index.js'
