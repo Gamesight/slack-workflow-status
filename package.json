@@ -1,40 +1,46 @@
 {
-  "name": "slack-workflow-notifications",
+  "name": "slack-workflow-status",
   "description": "A Github Action for sending Workflow run results to Slack",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "author": "Anthony Kinson",
   "license": "MIT",
   "main": "dist/index.js",
-  "private": true,
+  "private": false,
   "bugs": {
-    "url": "https://github.com/Gamesight/slack-workflow-notifications/issues"
+    "url": "https://github.com/Gamesight/slack-workflow-status/issues"
   },
-  "homepage": "https://github.com/Gamesight/slack-workflow-notifications#readme",
+  "homepage": "https://github.com/Gamesight/slack-workflow-status#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Gamesight/slack-workflow-notifications.git"
+    "url": "git+https://github.com/Gamesight/slack-workflow-status.git"
+  },
+  "engines": {
+    "node": ">=12.22.7"
   },
   "scripts": {
     "build": "ncc build src/main.ts",
+    "lint": "eslint src/main.ts",
     "test": "jest"
   },
   "dependencies": {
-    "@actions/core": "^1.2.6",
-    "@actions/github": "^2.2.0",
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.5",
-    "@types/request": "^2.48.1",
-    "@types/request-promise-native": "^1.0.15"
+    "@actions/core": ">= 1.2.6",
+    "@actions/github": ">= 4.0.0",
+    "@slack/webhook": ">= 5.0.3"
   },
   "devDependencies": {
-    "@types/jest": "^25.1.4",
-    "@zeit/ncc": "^0.22.0",
-    "husky": "^4.2.3",
-    "typescript": "^3.8.3"
+    "@types/node": "^14.14.9",
+    "@typescript-eslint/parser": "^4.8.1",
+    "@vercel/ncc": "^0.25.1",
+    "eslint": "^7.13.0",
+    "eslint-plugin-github": "^4.1.1",
+    "js-yaml": "^3.14.0",
+    "prettier": "2.1.1",
+    "typescript": "^4.0.2",
+    "husky": ">= 4.3.0"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run build && git add dist/"
+      "pre-commit": "npm run lint && npm run build && git add dist/"
     }
   }
 }
