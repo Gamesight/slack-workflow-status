@@ -6,7 +6,7 @@ module.exports =
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse("{\"name\":\"@slack/webhook\",\"version\":\"5.0.3\",\"description\":\"Official library for using the Slack Platform's Incoming Webhooks\",\"author\":\"Slack Technologies, Inc.\",\"license\":\"MIT\",\"keywords\":[\"slack\",\"request\",\"client\",\"http\",\"api\",\"proxy\"],\"main\":\"dist/index.js\",\"types\":\"./dist/index.d.ts\",\"files\":[\"dist/**/*\"],\"engines\":{\"node\":\">= 8.9.0\",\"npm\":\">= 5.5.1\"},\"repository\":\"slackapi/node-slack-sdk\",\"homepage\":\"https://slack.dev/node-slack-sdk/webhook\",\"publishConfig\":{\"access\":\"public\"},\"bugs\":{\"url\":\"https://github.com/slackapi/node-slack-sdk/issues\"},\"scripts\":{\"prepare\":\"npm run build\",\"build\":\"npm run build:clean && tsc\",\"build:clean\":\"shx rm -rf ./dist ./coverage ./.nyc_output\",\"lint\":\"tslint --project .\",\"test\":\"npm run build && nyc mocha --config .mocharc.json src/*.spec.js\",\"coverage\":\"codecov -F webhook --root=$PWD\"},\"dependencies\":{\"@slack/types\":\"^1.2.1\",\"@types/node\":\">=8.9.0\",\"axios\":\"^0.19.0\"},\"devDependencies\":{\"@types/chai\":\"^4.1.7\",\"@types/mocha\":\"^5.2.6\",\"chai\":\"^4.2.0\",\"codecov\":\"^3.2.0\",\"mocha\":\"^6.0.2\",\"nock\":\"^10.0.6\",\"nyc\":\"^14.1.1\",\"shx\":\"^0.3.2\",\"sinon\":\"^7.2.7\",\"source-map-support\":\"^0.5.10\",\"ts-node\":\"^8.0.3\",\"tslint\":\"^5.13.1\",\"tslint-config-airbnb\":\"^5.11.1\",\"typescript\":\"^3.3.3333\"},\"_resolved\":\"https://registry.npmjs.org/@slack/webhook/-/webhook-5.0.3.tgz\",\"_integrity\":\"sha512-51vnejJ2zABNumPVukOLyerpHQT39/Lt0TYFtOEz/N2X77bPofOgfPj2atB3etaM07mxWHLT9IRJ4Zuqx38DkQ==\",\"_from\":\"@slack/webhook@5.0.3\"}");
+module.exports = JSON.parse("{\"name\":\"@slack/webhook\",\"version\":\"5.0.3\",\"description\":\"Official library for using the Slack Platform's Incoming Webhooks\",\"author\":\"Slack Technologies, Inc.\",\"license\":\"MIT\",\"keywords\":[\"slack\",\"request\",\"client\",\"http\",\"api\",\"proxy\"],\"main\":\"dist/index.js\",\"types\":\"./dist/index.d.ts\",\"files\":[\"dist/**/*\"],\"engines\":{\"node\":\">= 8.9.0\",\"npm\":\">= 5.5.1\"},\"repository\":\"slackapi/node-slack-sdk\",\"homepage\":\"https://slack.dev/node-slack-sdk/webhook\",\"publishConfig\":{\"access\":\"public\"},\"bugs\":{\"url\":\"https://github.com/slackapi/node-slack-sdk/issues\"},\"scripts\":{\"prepare\":\"npm run build\",\"build\":\"npm run build:clean && tsc\",\"build:clean\":\"shx rm -rf ./dist ./coverage ./.nyc_output\",\"lint\":\"tslint --project .\",\"test\":\"npm run build && nyc mocha --config .mocharc.json src/*.spec.js\",\"coverage\":\"codecov -F webhook --root=$PWD\"},\"dependencies\":{\"@slack/types\":\"^1.2.1\",\"@types/node\":\">=8.9.0\",\"axios\":\"^0.19.0\"},\"devDependencies\":{\"@types/chai\":\"^4.1.7\",\"@types/mocha\":\"^5.2.6\",\"chai\":\"^4.2.0\",\"codecov\":\"^3.2.0\",\"mocha\":\"^6.0.2\",\"nock\":\"^10.0.6\",\"nyc\":\"^14.1.1\",\"shx\":\"^0.3.2\",\"sinon\":\"^7.2.7\",\"source-map-support\":\"^0.5.10\",\"ts-node\":\"^8.0.3\",\"tslint\":\"^5.13.1\",\"tslint-config-airbnb\":\"^5.11.1\",\"typescript\":\"^3.3.3333\"}}");
 
 /***/ }),
 
@@ -9337,6 +9337,9 @@ function main() {
         const include_jobs = core.getInput('include_jobs', {
             required: true
         });
+        const include_commit_message = core.getInput('include_commit_message', {
+            required: true
+        }) === 'true';
         const slack_channel = core.getInput('channel');
         const slack_name = core.getInput('name');
         const slack_icon = core.getInput('icon_url');
@@ -9419,7 +9422,7 @@ function main() {
         const branch_url = `<${workflow_run.repository.html_url}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`;
         const workflow_run_url = `<${workflow_run.html_url}|#${workflow_run.run_number}>`;
         // Example: Success: AnthonyKinson's `push` on `master` for pull_request
-        let status_string = `${workflow_msg} ${github_1.context.actor}'s \`${github_1.context.eventName}\` on \`${branch_url}\`\n`;
+        let status_string = `${workflow_msg} ${github_1.context.actor}'s \`${github_1.context.eventName}\` on \`${branch_url}\``;
         // Example: Workflow: My Workflow #14 completed in `1m 30s`
         const details_string = `Workflow: ${github_1.context.workflow} ${workflow_run_url} completed in \`${workflow_duration}\``;
         // Build Pull Request string if required
@@ -9427,8 +9430,9 @@ function main() {
             .map(pull_request => `<${workflow_run.repository.html_url}/pull/${pull_request.number}|#${pull_request.number}> from \`${pull_request.head.ref}\` to \`${pull_request.base.ref}\``)
             .join(', ');
         if (pull_requests !== '') {
-            status_string = `${workflow_msg} ${github_1.context.actor}'s \`pull_request\` ${pull_requests}\n`;
+            status_string = `${workflow_msg} ${github_1.context.actor}'s \`pull_request\` ${pull_requests}`;
         }
+        const commit_message = `Commit: ${workflow_run.head_commit.message}`;
         // We're using old style attachments rather than the new blocks because:
         // - Blocks don't allow colour indicators on messages
         // - Block are limited to 10 fields. >10 jobs in a workflow results in payload failure
@@ -9436,7 +9440,9 @@ function main() {
         const slack_attachment = {
             mrkdwn_in: ['text'],
             color: workflow_color,
-            text: status_string + details_string,
+            text: [status_string, details_string]
+                .concat(include_commit_message ? [commit_message] : [])
+                .join('\n'),
             footer: repo_url,
             footer_icon: 'https://github.githubassets.com/favicon.ico',
             fields: job_fields
@@ -9498,7 +9504,7 @@ module.exports = eval("require")("encoding");
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse("{\"name\":\"axios\",\"version\":\"0.19.2\",\"description\":\"Promise based HTTP client for the browser and node.js\",\"main\":\"index.js\",\"scripts\":{\"test\":\"grunt test && bundlesize\",\"start\":\"node ./sandbox/server.js\",\"build\":\"NODE_ENV=production grunt build\",\"preversion\":\"npm test\",\"version\":\"npm run build && grunt version && git add -A dist && git add CHANGELOG.md bower.json package.json\",\"postversion\":\"git push && git push --tags\",\"examples\":\"node ./examples/server.js\",\"coveralls\":\"cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js\",\"fix\":\"eslint --fix lib/**/*.js\"},\"repository\":{\"type\":\"git\",\"url\":\"https://github.com/axios/axios.git\"},\"keywords\":[\"xhr\",\"http\",\"ajax\",\"promise\",\"node\"],\"author\":\"Matt Zabriskie\",\"license\":\"MIT\",\"bugs\":{\"url\":\"https://github.com/axios/axios/issues\"},\"homepage\":\"https://github.com/axios/axios\",\"devDependencies\":{\"bundlesize\":\"^0.17.0\",\"coveralls\":\"^3.0.0\",\"es6-promise\":\"^4.2.4\",\"grunt\":\"^1.0.2\",\"grunt-banner\":\"^0.6.0\",\"grunt-cli\":\"^1.2.0\",\"grunt-contrib-clean\":\"^1.1.0\",\"grunt-contrib-watch\":\"^1.0.0\",\"grunt-eslint\":\"^20.1.0\",\"grunt-karma\":\"^2.0.0\",\"grunt-mocha-test\":\"^0.13.3\",\"grunt-ts\":\"^6.0.0-beta.19\",\"grunt-webpack\":\"^1.0.18\",\"istanbul-instrumenter-loader\":\"^1.0.0\",\"jasmine-core\":\"^2.4.1\",\"karma\":\"^1.3.0\",\"karma-chrome-launcher\":\"^2.2.0\",\"karma-coverage\":\"^1.1.1\",\"karma-firefox-launcher\":\"^1.1.0\",\"karma-jasmine\":\"^1.1.1\",\"karma-jasmine-ajax\":\"^0.1.13\",\"karma-opera-launcher\":\"^1.0.0\",\"karma-safari-launcher\":\"^1.0.0\",\"karma-sauce-launcher\":\"^1.2.0\",\"karma-sinon\":\"^1.0.5\",\"karma-sourcemap-loader\":\"^0.3.7\",\"karma-webpack\":\"^1.7.0\",\"load-grunt-tasks\":\"^3.5.2\",\"minimist\":\"^1.2.0\",\"mocha\":\"^5.2.0\",\"sinon\":\"^4.5.0\",\"typescript\":\"^2.8.1\",\"url-search-params\":\"^0.10.0\",\"webpack\":\"^1.13.1\",\"webpack-dev-server\":\"^1.14.1\"},\"browser\":{\"./lib/adapters/http.js\":\"./lib/adapters/xhr.js\"},\"typings\":\"./index.d.ts\",\"dependencies\":{\"follow-redirects\":\"1.5.10\"},\"bundlesize\":[{\"path\":\"./dist/axios.min.js\",\"threshold\":\"5kB\"}],\"_resolved\":\"https://registry.npmjs.org/axios/-/axios-0.19.2.tgz\",\"_integrity\":\"sha512-fjgm5MvRHLhx+osE2xoekY70AhARk3a6hkN+3Io1jc00jtquGvxYlKlsFUhmUET0V5te6CcZI7lcv2Ym61mjHA==\",\"_from\":\"axios@0.19.2\"}");
+module.exports = JSON.parse("{\"name\":\"axios\",\"version\":\"0.19.2\",\"description\":\"Promise based HTTP client for the browser and node.js\",\"main\":\"index.js\",\"scripts\":{\"test\":\"grunt test && bundlesize\",\"start\":\"node ./sandbox/server.js\",\"build\":\"NODE_ENV=production grunt build\",\"preversion\":\"npm test\",\"version\":\"npm run build && grunt version && git add -A dist && git add CHANGELOG.md bower.json package.json\",\"postversion\":\"git push && git push --tags\",\"examples\":\"node ./examples/server.js\",\"coveralls\":\"cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js\",\"fix\":\"eslint --fix lib/**/*.js\"},\"repository\":{\"type\":\"git\",\"url\":\"https://github.com/axios/axios.git\"},\"keywords\":[\"xhr\",\"http\",\"ajax\",\"promise\",\"node\"],\"author\":\"Matt Zabriskie\",\"license\":\"MIT\",\"bugs\":{\"url\":\"https://github.com/axios/axios/issues\"},\"homepage\":\"https://github.com/axios/axios\",\"devDependencies\":{\"bundlesize\":\"^0.17.0\",\"coveralls\":\"^3.0.0\",\"es6-promise\":\"^4.2.4\",\"grunt\":\"^1.0.2\",\"grunt-banner\":\"^0.6.0\",\"grunt-cli\":\"^1.2.0\",\"grunt-contrib-clean\":\"^1.1.0\",\"grunt-contrib-watch\":\"^1.0.0\",\"grunt-eslint\":\"^20.1.0\",\"grunt-karma\":\"^2.0.0\",\"grunt-mocha-test\":\"^0.13.3\",\"grunt-ts\":\"^6.0.0-beta.19\",\"grunt-webpack\":\"^1.0.18\",\"istanbul-instrumenter-loader\":\"^1.0.0\",\"jasmine-core\":\"^2.4.1\",\"karma\":\"^1.3.0\",\"karma-chrome-launcher\":\"^2.2.0\",\"karma-coverage\":\"^1.1.1\",\"karma-firefox-launcher\":\"^1.1.0\",\"karma-jasmine\":\"^1.1.1\",\"karma-jasmine-ajax\":\"^0.1.13\",\"karma-opera-launcher\":\"^1.0.0\",\"karma-safari-launcher\":\"^1.0.0\",\"karma-sauce-launcher\":\"^1.2.0\",\"karma-sinon\":\"^1.0.5\",\"karma-sourcemap-loader\":\"^0.3.7\",\"karma-webpack\":\"^1.7.0\",\"load-grunt-tasks\":\"^3.5.2\",\"minimist\":\"^1.2.0\",\"mocha\":\"^5.2.0\",\"sinon\":\"^4.5.0\",\"typescript\":\"^2.8.1\",\"url-search-params\":\"^0.10.0\",\"webpack\":\"^1.13.1\",\"webpack-dev-server\":\"^1.14.1\"},\"browser\":{\"./lib/adapters/http.js\":\"./lib/adapters/xhr.js\"},\"typings\":\"./index.d.ts\",\"dependencies\":{\"follow-redirects\":\"1.5.10\"},\"bundlesize\":[{\"path\":\"./dist/axios.min.js\",\"threshold\":\"5kB\"}]}");
 
 /***/ }),
 

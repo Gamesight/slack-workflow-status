@@ -57,6 +57,10 @@ async function main(): Promise<void> {
   const include_jobs = core.getInput('include_jobs', {
     required: true
   }) as IncludeJobs
+  const include_commit_message =
+    core.getInput('include_commit_message', {
+      required: true
+    }) === 'true'
   const slack_channel = core.getInput('channel')
   const slack_name = core.getInput('name')
   const slack_icon = core.getInput('icon_url')
@@ -152,7 +156,7 @@ async function main(): Promise<void> {
   const branch_url = `<${workflow_run.repository.html_url}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`
   const workflow_run_url = `<${workflow_run.html_url}|#${workflow_run.run_number}>`
   // Example: Success: AnthonyKinson's `push` on `master` for pull_request
-  let status_string = `${workflow_msg} ${context.actor}'s \`${context.eventName}\` on \`${branch_url}\`\n`
+  let status_string = `${workflow_msg} ${context.actor}'s \`${context.eventName}\` on \`${branch_url}\``
   // Example: Workflow: My Workflow #14 completed in `1m 30s`
   const details_string = `Workflow: ${context.workflow} ${workflow_run_url} completed in \`${workflow_duration}\``
 
@@ -165,8 +169,10 @@ async function main(): Promise<void> {
     .join(', ')
 
   if (pull_requests !== '') {
-    status_string = `${workflow_msg} ${context.actor}'s \`pull_request\` ${pull_requests}\n`
+    status_string = `${workflow_msg} ${context.actor}'s \`pull_request\` ${pull_requests}`
   }
+
+  const commit_message = `Commit: ${workflow_run.head_commit.message}`
 
   // We're using old style attachments rather than the new blocks because:
   // - Blocks don't allow colour indicators on messages
@@ -176,7 +182,9 @@ async function main(): Promise<void> {
   const slack_attachment = {
     mrkdwn_in: ['text' as const],
     color: workflow_color,
-    text: status_string + details_string,
+    text: [status_string, details_string]
+      .concat(include_commit_message ? [commit_message] : [])
+      .join('\n'),
     footer: repo_url,
     footer_icon: 'https://github.githubassets.com/favicon.ico',
     fields: job_fields
