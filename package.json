@@ -1,7 +1,7 @@
 {
   "name": "slack-workflow-status",
   "description": "A Github Action for sending Workflow run results to Slack",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "author": "Anthony Kinson",
   "license": "MIT",
   "main": "dist/index.js",
