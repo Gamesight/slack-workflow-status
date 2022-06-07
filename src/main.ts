@@ -162,6 +162,10 @@ async function main(): Promise<void> {
 
   // Build Pull Request string if required
   const pull_requests = (workflow_run.pull_requests as PullRequest[])
+    .filter(
+      pull_request =>
+        pull_request.base.repo.url === workflow_run.repository.url // exclude PRs from external repositories
+    )
     .map(
       pull_request =>
         `<${workflow_run.repository.html_url}/pull/${pull_request.number}|#${pull_request.number}> from \`${pull_request.head.ref}\` to \`${pull_request.base.ref}\``
