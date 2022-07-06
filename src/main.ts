@@ -155,10 +155,13 @@ async function main(): Promise<void> {
   const repo_url = `<${workflow_run.repository.html_url}|*${workflow_run.repository.full_name}*>`
   const branch_url = `<${workflow_run.repository.html_url}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`
   const workflow_run_url = `<${workflow_run.html_url}|#${workflow_run.run_number}>`
+  const workflow_path = `${(workflow_run as any).path.replace('.github', 'actions')}`
+  const workflow_runs_url = `<${workflow_run.repository.html_url}/${workflow_path}?query=branch%3A${workflow_run.head_branch}|${context.workflow}>`;
+
   // Example: Success: AnthonyKinson's `push` on `master` for pull_request
   let status_string = `${workflow_msg} ${context.actor}'s \`${context.eventName}\` on \`${branch_url}\``
   // Example: Workflow: My Workflow #14 completed in `1m 30s`
-  const details_string = `Workflow: ${context.workflow} ${workflow_run_url} completed in \`${workflow_duration}\``
+  const details_string = `Workflow: ${workflow_runs_url} ${workflow_run_url} completed in \`${workflow_duration}\``
 
   // Build Pull Request string if required
   const pull_requests = (workflow_run.pull_requests as PullRequest[])
