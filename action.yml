@@ -32,5 +32,5 @@ inputs:
     required: true
     default: "false"
 runs:
-  using: 'node12'
+  using: 'node16'
   main: 'dist/index.js'
