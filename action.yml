@@ -31,6 +31,10 @@ inputs:
     description: 'Should the slack notification include the head commit message'
     required: true
     default: "false"
+  workflow_run:
+    required: false
+    default: "false"
+    description: 'Execution in workflow_run event'
 runs:
   using: 'node16'
   main: 'dist/index.js'
