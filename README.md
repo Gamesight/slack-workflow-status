@@ -20,6 +20,8 @@ This action will post workflow status notifications into your Slack channel. The
 ## Usage
 To use this action properly, you should create a new `job` at the end of your workflow that `needs` all other jobs in the workflow. This ensures that this action is only run once all jobs in your workflow are complete.
 
+This action requires `read` permission of `actions` scope. You should assign a job level `actions` permission if workflow level `actions` permission is set `none`.
+
 ```yaml
 name: World Greeter
 on:
@@ -43,6 +45,9 @@ jobs:
       - job-1
       - job-2
     runs-on: ubuntu-latest
+    # actions.read permission is required.
+    permissions:
+      actions: 'read'
     steps:
       - name: Slack Workflow Notification
         uses: Gamesight/slack-workflow-status@master
