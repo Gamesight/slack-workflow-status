@@ -65,12 +65,13 @@ async function main(): Promise<void> {
   const slack_name = core.getInput('name')
   const slack_icon = core.getInput('icon_url')
   const slack_emoji = core.getInput('icon_emoji') // https://www.webfx.com/tools/emoji-cheat-sheet/
+  const from_workflow_run = core.getInput('workflow_run') === 'true'
   // Force as secret, forces *** when trying to print or log values
   core.setSecret(github_token)
   core.setSecret(webhook_url)
   // Auth github with octokit module
   const octokit = getOctokit(github_token)
-  const run_id = core.getInput('workflow_run')
+  const run_id = from_workflow_run
     ? Number(context.payload.workflow_run.id)
     : Number(context.runId)
   // Fetch workflow run data
@@ -158,10 +159,10 @@ async function main(): Promise<void> {
   const repo_url = `<${workflow_run.repository.html_url}|*${workflow_run.repository.full_name}*>`
   const branch_url = `<${workflow_run.repository.html_url}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`
   const workflow_run_url = `<${workflow_run.html_url}|#${workflow_run.run_number}>`
-  const event_name = core.getInput('workflow_run')
+  const event_name = from_workflow_run
     ? context.payload.workflow_run.event
     : context.eventName
-  const workflow_name = core.getInput('workflow_run')
+  const workflow_name = from_workflow_run
     ? context.payload.workflow_run.name
     : context.workflow
   // Example: Success: AnthonyKinson's `push` on `master` for pull_request
