@@ -81,7 +81,8 @@ async function main(): Promise<void> {
   const {data: jobs_response} = await octokit.actions.listJobsForWorkflowRun({
     owner: context.repo.owner,
     repo: context.repo.repo,
-    run_id: context.runId
+    run_id: context.runId,
+    per_page: 100
   })
 
   const completed_jobs = jobs_response.jobs.filter(
