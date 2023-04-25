@@ -75,14 +75,16 @@ async function main(): Promise<void> {
   // Auth github with octokit module
   const octokit = getOctokit(github_token)
   // Fetch workflow run data
-  const {data: workflow_run} = await octokit.actions.getWorkflowRun({
+  const {data: workflow_run} = await octokit.rest.actions.getWorkflowRun({
     owner: context.repo.owner,
     repo: context.repo.repo,
     run_id: context.runId
   })
 
   // Fetch workflow job information
-  const {data: jobs_response} = await octokit.actions.listJobsForWorkflowRun({
+  const {
+    data: jobs_response
+  } = await octokit.rest.actions.listJobsForWorkflowRun({
     owner: context.repo.owner,
     repo: context.repo.repo,
     run_id: context.runId,
@@ -100,7 +102,11 @@ async function main(): Promise<void> {
   let job_fields: SlackMessageAttachementFields
 
   if (
-    completed_jobs.every(job => ['success', 'skipped'].includes(job.conclusion))
+    completed_jobs.every(
+      job =>
+        job.conclusion !== null &&
+        ['success', 'skipped'].includes(job.conclusion)
+    )
   ) {
     workflow_color = 'good'
     workflow_msg = 'Success:'
@@ -151,8 +157,8 @@ async function main(): Promise<void> {
     }
 
     const job_duration = compute_duration({
-      start: new Date(job.started_at),
-      end: new Date(job.completed_at)
+      start: new Date(job.started_at ?? new Date(0)),
+      end: new Date(job.completed_at ?? new Date(0))
     })
 
     return {
@@ -163,9 +169,15 @@ async function main(): Promise<void> {
   })
 
   // Payload Formatting Shortcuts
+  const start = new Date(workflow_run.created_at.toString())
+  const end =
+    workflow_run.updated_at === workflow_run.created_at
+      ? new Date()
+      : new Date(workflow_run.updated_at.toString())
+
   const workflow_duration = compute_duration({
-    start: new Date(workflow_run.created_at),
-    end: new Date(workflow_run.updated_at)
+    start,
+    end
   })
   const repo_url = `<${workflow_run.repository.html_url}|*${workflow_run.repository.full_name}*>`
   const branch_url = `<${workflow_run.repository.html_url}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`
@@ -190,7 +202,7 @@ async function main(): Promise<void> {
     status_string = `${workflow_msg} ${context.actor}'s \`pull_request\` ${pull_requests}`
   }
 
-  const commit_message = `Commit: ${workflow_run.head_commit.message}`
+  const commit_message = `Commit: ${workflow_run.head_commit?.message}`
 
   // We're using old style attachments rather than the new blocks because:
   // - Blocks don't allow colour indicators on messages
