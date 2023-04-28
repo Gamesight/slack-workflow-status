@@ -57,6 +57,10 @@ async function main(): Promise<void> {
   const include_jobs = core.getInput('include_jobs', {
     required: true
   }) as IncludeJobs
+  const display_only_failed =
+    core.getInput('display_only_failed', {
+      required: true
+    }) === 'true'
   const include_commit_message =
     core.getInput('include_commit_message', {
       required: true
@@ -81,7 +85,8 @@ async function main(): Promise<void> {
   const {data: jobs_response} = await octokit.actions.listJobsForWorkflowRun({
     owner: context.repo.owner,
     repo: context.repo.repo,
-    run_id: context.runId
+    run_id: context.runId,
+    per_page: 100
   })
 
   const completed_jobs = jobs_response.jobs.filter(
@@ -109,7 +114,7 @@ async function main(): Promise<void> {
       job_fields = []
     }
   } else {
-    // (jobs_response.jobs.some(job => job.conclusion === 'failed')
+    // (jobs_response.jobs.some(job => job.conclusion === 'failure')
     workflow_color = 'danger'
     workflow_msg = 'Failed:'
   }
@@ -119,7 +124,17 @@ async function main(): Promise<void> {
   }
 
   // Build Job Data Fields
-  job_fields ??= completed_jobs.map(job => {
+  let jobs_list
+
+  if (display_only_failed) {
+    jobs_list = completed_jobs.filter(
+      job => job.conclusion === 'failure' || job.conclusion === 'cancelled'
+    )
+  } else {
+    jobs_list = completed_jobs
+  }
+
+  job_fields ??= jobs_list.map(job => {
     let job_status_icon
 
     switch (job.conclusion) {
@@ -163,8 +178,7 @@ async function main(): Promise<void> {
   // Build Pull Request string if required
   const pull_requests = (workflow_run.pull_requests as PullRequest[])
     .filter(
-      pull_request =>
-        pull_request.base.repo.url === workflow_run.repository.url // exclude PRs from external repositories
+      pull_request => pull_request.base.repo.url === workflow_run.repository.url // exclude PRs from external repositories
     )
     .map(
       pull_request =>
