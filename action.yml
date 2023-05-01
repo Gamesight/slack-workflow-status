@@ -27,6 +27,10 @@ inputs:
     description: 'Should the slack notification include individual job status and run times'
     required: true
     default: "true"
+  display_only_failed:
+    description: 'Should the slack notification in case of failure display only failed jobs'
+    required: true
+    default: "false"
   include_commit_message:
     description: 'Should the slack notification include the head commit message'
     required: true
