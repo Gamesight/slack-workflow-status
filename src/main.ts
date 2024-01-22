@@ -54,6 +54,7 @@ async function main(): Promise<void> {
     required: true
   })
   const github_token = core.getInput('repo_token', {required: true})
+  const jobs_to_fetch = core.getInput("jobs_to_fetch", {required: true})
   const include_jobs = core.getInput('include_jobs', {
     required: true
   }) as IncludeJobs
@@ -81,7 +82,8 @@ async function main(): Promise<void> {
   const {data: jobs_response} = await octokit.actions.listJobsForWorkflowRun({
     owner: context.repo.owner,
     repo: context.repo.repo,
-    run_id: context.runId
+    run_id: context.runId,
+    per_page: jobs_to_fetch,
   })
 
   const completed_jobs = jobs_response.jobs.filter(

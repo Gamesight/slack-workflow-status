@@ -11184,6 +11184,7 @@ function main() {
             required: true
         });
         const github_token = core.getInput('repo_token', { required: true });
+        const jobs_to_fetch = core.getInput("jobs_to_fetch", {required: true})
         const include_jobs = core.getInput('include_jobs', {
             required: true
         });
@@ -11209,7 +11210,8 @@ function main() {
         const { data: jobs_response } = yield octokit.actions.listJobsForWorkflowRun({
             owner: github_1.context.repo.owner,
             repo: github_1.context.repo.repo,
-            run_id: github_1.context.runId
+            run_id: github_1.context.runId,
+            per_page: jobs_to_fetch,
         });
         const completed_jobs = jobs_response.jobs.filter(job => job.status === 'completed');
         // Configure slack attachment styling
