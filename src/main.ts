@@ -83,7 +83,7 @@ async function main(): Promise<void> {
     owner: context.repo.owner,
     repo: context.repo.repo,
     run_id: context.runId,
-    per_page: jobs_to_fetch,
+    per_page: parseInt(jobs_to_fetch, 30),
   })
 
   const completed_jobs = jobs_response.jobs.filter(
