@@ -27,14 +27,14 @@ inputs:
     description: 'Should the slack notification include individual job status and run times'
     required: true
     default: "true"
+  jobs_to_include:
+    description: 'Should all jobs be included or only the ones that failed'
+    required: true
+    default: "all"
   include_commit_message:
     description: 'Should the slack notification include the head commit message'
     required: true
     default: "false"
-  jobs_to_fetch:
-    description: 'Number of jobs to fetch (for workflows with big number of jobs)'
-    required: false
-    default: '30'
 runs:
   using: 'node20'
   main: 'dist/index.js'

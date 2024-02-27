@@ -42,6 +42,7 @@ interface PullRequest {
 }
 
 type IncludeJobs = 'true' | 'false' | 'on-failure'
+type JobsToInclude = 'all' | 'failed'
 type SlackMessageAttachementFields = MessageAttachment['fields']
 
 process.on('unhandledRejection', handleError)
@@ -54,10 +55,12 @@ async function main(): Promise<void> {
     required: true
   })
   const github_token = core.getInput('repo_token', {required: true})
-  const jobs_to_fetch = core.getInput("jobs_to_fetch", {required: true})
   const include_jobs = core.getInput('include_jobs', {
     required: true
   }) as IncludeJobs
+  const jobs_to_include = core.getInput('jobs_to_include', {
+    required: true
+  }) as JobsToInclude
   const include_commit_message =
     core.getInput('include_commit_message', {
       required: true
@@ -72,23 +75,36 @@ async function main(): Promise<void> {
   // Auth github with octokit module
   const octokit = getOctokit(github_token)
   // Fetch workflow run data
-  const {data: workflow_run} = await octokit.actions.getWorkflowRun({
+  const {data: workflow_run} = await octokit.rest.actions.getWorkflowRun({
     owner: context.repo.owner,
     repo: context.repo.repo,
     run_id: context.runId
   })
 
   // Fetch workflow job information
-  const {data: jobs_response} = await octokit.actions.listJobsForWorkflowRun({
+  let included_jobs: any[] = []
+  for await (const jobs_response of octokit.paginate.iterator(
+    octokit.rest.actions.listJobsForWorkflowRun, {
     owner: context.repo.owner,
     repo: context.repo.repo,
     run_id: context.runId,
-    per_page: parseInt(jobs_to_fetch, 30),
-  })
-
-  const completed_jobs = jobs_response.jobs.filter(
-    job => job.status === 'completed'
-  )
+  })) {
+    const jobs_data = jobs_response.data
+    console.log("total count: ", jobs_data.total_count)
+    if (jobs_data.total_count === 0) {
+      console.log("total count = 0, no jobs found")
+      break
+    }
+    if (jobs_to_include === 'failed') {
+      included_jobs.push(...jobs_data.filter(
+        job => job.conclusion === 'failure'
+      ))
+    } else {
+      included_jobs.push(...jobs_data.filter(
+        job => job.status === 'completed'
+      ))
+    }
+  }
 
   // Configure slack attachment styling
   let workflow_color // can be good, danger, warning or a HEX colour (#00FF00)
@@ -97,14 +113,14 @@ async function main(): Promise<void> {
   let job_fields: SlackMessageAttachementFields
 
   if (
-    completed_jobs.every(job => ['success', 'skipped'].includes(job.conclusion))
+    included_jobs.every(job => job.conclusion && ['success', 'skipped'].includes(job.conclusion))
   ) {
     workflow_color = 'good'
     workflow_msg = 'Success:'
     if (include_jobs === 'on-failure') {
       job_fields = []
     }
-  } else if (completed_jobs.some(job => job.conclusion === 'cancelled')) {
+  } else if (included_jobs.some(job => job.conclusion === 'cancelled')) {
     workflow_color = 'warning'
     workflow_msg = 'Cancelled:'
     if (include_jobs === 'on-failure') {
@@ -121,7 +137,7 @@ async function main(): Promise<void> {
   }
 
   // Build Job Data Fields
-  job_fields ??= completed_jobs.map(job => {
+  job_fields ??= included_jobs.map(job => {
     let job_status_icon
 
     switch (job.conclusion) {
@@ -139,7 +155,7 @@ async function main(): Promise<void> {
 
     const job_duration = compute_duration({
       start: new Date(job.started_at),
-      end: new Date(job.completed_at)
+      end: job.completed_at ? new Date(job.completed_at) : new Date(job.started_at)
     })
 
     return {
@@ -178,7 +194,7 @@ async function main(): Promise<void> {
     status_string = `${workflow_msg} ${context.actor}'s \`pull_request\` ${pull_requests}`
   }
 
-  const commit_message = `Commit: ${workflow_run.head_commit.message}`
+  const commit_message = `Commit: ${workflow_run.head_commit ? workflow_run.head_commit.message : ''}`
 
   // We're using old style attachments rather than the new blocks because:
   // - Blocks don't allow colour indicators on messages
