@@ -202,7 +202,7 @@ async function main(): Promise<void> {
     status_string = `${workflow_msg} ${context.actor}'s \`pull_request\` ${pull_requests}`
   }
 
-  const commit_message = `Commit: ${workflow_run.head_commit?.message}`
+  const commit_message = `Commit: ${workflow_run.head_commit?.message} (SHA: ${workflow_run.head_sha || 'N/A'})`;
 
   // We're using old style attachments rather than the new blocks because:
   // - Blocks don't allow colour indicators on messages
