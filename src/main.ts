@@ -37,14 +37,15 @@ async function main(): Promise<void> {
       slackChannel,
       notifyOn,
       jobsToFetch,
-      includeJobs,
-      includeJobsTime,
+      includeJobStatuses,
+      includeJobDurations,
       includeCommitMessage,
       commentJunitFailures,
       commentJunitFlakes,
-      commentJunitFailuresEmoji,
-      commentJunitFlakesEmoji,
-      customMessageTitle
+      emojiJunitFailures,
+      emojiJunitFlakes,
+      customTitle,
+      filterJobs
     } = inputs
 
     // Exit early if notifyOn is set to "never"
@@ -69,7 +70,8 @@ async function main(): Promise<void> {
       githubToken,
       workflowRun,
       notifyOn,
-      jobsToFetch
+      jobsToFetch,
+      filterJobs
     })
 
     if (!shouldNotify) {
@@ -83,8 +85,8 @@ async function main(): Promise<void> {
     const jobSummaryMessage = buildJobSummaryMessage({
       workflowRun,
       completedJobs,
-      includeJobs,
-      includeJobsTime,
+      includeJobStatuses,
+      includeJobDurations,
       actor: workflowRun.actor.login,
       branchUrl: `<${workflowRun.repository.html_url}/tree/${workflowRun.head_branch}|${workflowRun.head_branch}>`,
       workflowRunUrl: `<${workflowRun.html_url}|#${workflowRun.run_number}>`,
@@ -97,7 +99,7 @@ async function main(): Promise<void> {
     const initialMessage = await sendSlackMessage({
       slackToken,
       channel: slackChannel,
-      message: customMessageTitle || jobSummaryMessage.text,
+      message: customTitle || jobSummaryMessage.text,
       attachments: jobSummaryMessage.attachments
     })
     const threadTs = initialMessage.ts
@@ -111,8 +113,8 @@ async function main(): Promise<void> {
         reportUrls,
         commentFailures: commentJunitFailures,
         commentFlakes: commentJunitFlakes,
-        commentJunitFailuresEmoji,
-        commentJunitFlakesEmoji
+        commentJunitFailuresEmoji: emojiJunitFailures,
+        commentJunitFlakesEmoji: emojiJunitFlakes
       })
 
       // Comment on the initial message with the test summary

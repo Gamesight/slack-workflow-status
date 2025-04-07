@@ -17,21 +17,22 @@ This action posts workflow status notifications into your Slack channel. The not
 
 `midleman/slack-workflow-status@master`
 
-| Name                       | Required  | Default         | Description |
-|----------------------------|-----------|-----------------|-------------|
-| **repo_token**             | Yes       | -               | A token is automatically available in your workflow secrets var: `${{secrets.GITHUB_TOKEN}}`. You can optionally send an alternative self-generated token. |
-| **slack_token**            | Yes       | -               | Your Slack token for posting notifications. |
-| **channel**                | No        | -               | The Slack channel to send notifications to. |
-| **include_jobs**           | No        | `true`          | When set to `true`, includes individual job statuses and durations in the Slack notification. Use `false` to exclude them or `on-failure` to include only when the workflow fails. |
-| **include_jobs_time**      | No        | `true`          | When `true`, includes job run times in the Slack notification. |
-| **include_commit_message** | No        | `true`          | When `true`, includes the head commit message in the notification. |
-| **jobs_to_fetch**          | No        | `30`            | Sets the number of jobs to fetch for workflows with a large number of jobs. |
-| **notify_on**              | No        | `always`        | Controls when notifications are sent: `always`, `fail-only`, `never`. |
-| **comment_junit_failures** | No        | `false`         | When `true`, includes JUnit test failures in the Slack notification comment thread. |
-| **comment_junit_flakes**   | No        | `false`         | When `true`, includes JUnit test flakes in the Slack notification comment thread. |
-| **comment_junit_fail_emoji** | No      | `:x:`           | Emoji used for JUnit test failures. |
-| **comment_junit_flakes_emoji** | No    | `:warning:`     | Emoji used for JUnit test flakes. |
-| **custom_message_title**   | No        | -               | Override the default slack message title with your own. |
+| Name                             | Required  | Default         | Description |
+|----------------------------------|-----------|-----------------|-------------|
+| **gh_repo_token**            | Yes       | -               | GitHub token for authentication, defaults to `${{secrets.GITHUB_TOKEN}}`. |
+| **slack_token**                  | Yes       | -               | Slack token for posting notifications. |
+| **slack_channel**                | No        | -               | Slack channel to send notifications. |
+| **notify_on**                    | No        | `always`        | Controls when notifications are sent: `always`, `fail-only`, `never`. |
+| **msg_include_job_statuses**     | No        | `true`          | Includes job statuses in notifications. Use `false` to exclude or `on-failure` for failures only. |
+| **msg_include_job_durations**    | No        | `true`          | When `true`, includes job run times in the Slack notification. Requires: include_job_statuses. |
+| **msg_job_filter**               | No        | -               | Comma-separated list of jobs to include in the message. Requires: include_job_statuses. |
+| **msg_include_commit**           | No        | `true`          | When `true`, includes the head commit message in the notification. |
+| **msg_custom_title**             | No        | -               | Override the default slack message title with your own. |
+| **comment_junit_failures**   | No        | `false`         | When `true`, includes JUnit test failures in the Slack notification comment thread. |
+| **comment_junit_flakes**     | No        | `false`         | When `true`, includes JUnit test flakes in the Slack notification comment thread. |
+| **emoji_junit_failure**   | No        | `:x:`           | Emoji used for JUnit test failures. |
+| **emoji_junit_flake**     | No        | `:warning:`     | Emoji used for JUnit test flakes. |
+| **jobs_to_fetch**                | No        | `30`            | Sets the number of jobs to fetch for workflows with a large number of jobs. |
 
 ## Composite Action Inputs
 
@@ -101,11 +102,11 @@ jobs:
       - name: Post Workflow Status to Slack
         uses: midleman/slack-workflow-status@v2.2.1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          gh_repo_token: ${{ secrets.GITHUB_TOKEN }}
           slack_token: ${{ secrets.SLACK_TOKEN }}
           channel: '#test-results'
-          comment_junit_failures: true
-          comment_junit_flakes: true
+          include_junit_failures_in_comment: true
+          include_junit_flakes_in_comment: true
 ```
 
 ## Light and Dark Theme
