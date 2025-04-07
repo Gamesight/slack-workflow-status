@@ -27403,7 +27403,7 @@ function analyzeJobs({ githubToken, workflowRun, notifyOn, jobsToFetch, filterJo
         console.log('filterJobs -->', filterJobs);
         const completedJobs = jobsResponse.jobs
             .filter((job) => job.status === 'completed')
-            .filter((job) => !filterJobs || filterJobs.includes(job.name));
+            .filter((job) => (filterJobs === null || filterJobs === void 0 ? void 0 : filterJobs.length) === 0 || (filterJobs === null || filterJobs === void 0 ? void 0 : filterJobs.includes(job.name)));
         const hasFailures = completedJobs.some((job) => !['success', 'skipped'].includes(job.conclusion));
         console.log('completedJobs -->', completedJobs);
         console.log('notifyOn -->', notifyOn);

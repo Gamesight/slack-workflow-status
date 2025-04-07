@@ -31,7 +31,7 @@ export async function analyzeJobs({
   console.log('filterJobs -->', filterJobs)
   const completedJobs = jobsResponse.jobs
     .filter((job) => job.status === 'completed')
-    .filter((job) => !filterJobs || filterJobs.includes(job.name))
+    .filter((job) => filterJobs?.length === 0 || filterJobs?.includes(job.name))
 
   const hasFailures = completedJobs.some(
     (job) => !['success', 'skipped'].includes(job.conclusion)
