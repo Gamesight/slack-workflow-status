@@ -27400,14 +27400,10 @@ function analyzeJobs({ githubToken, workflowRun, notifyOn, jobsToFetch, filterJo
             run_id: workflowRun.id,
             per_page: jobsToFetch
         });
-        console.log('filterJobs -->', filterJobs);
         const completedJobs = jobsResponse.jobs
             .filter((job) => job.status === 'completed')
             .filter((job) => (filterJobs === null || filterJobs === void 0 ? void 0 : filterJobs.length) === 0 || (filterJobs === null || filterJobs === void 0 ? void 0 : filterJobs.includes(job.name)));
         const hasFailures = completedJobs.some((job) => !['success', 'skipped'].includes(job.conclusion));
-        console.log('completedJobs -->', completedJobs);
-        console.log('notifyOn -->', notifyOn);
-        console.log('hasFailures -->', hasFailures);
         const shouldNotify = notifyOn === 'always' || (notifyOn.includes('fail') && hasFailures);
         if (shouldNotify) {
             const reason = notifyOn === 'always'
