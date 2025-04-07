@@ -36,6 +36,10 @@ export async function analyzeJobs({
     (job) => !['success', 'skipped'].includes(job.conclusion)
   )
 
+  console.log('completedJobs -->', completedJobs)
+  console.log('notifyOn -->', notifyOn)
+  console.log('hasFailures -->', hasFailures)
+
   const shouldNotify =
     notifyOn === 'always' || (notifyOn.includes('fail') && hasFailures)
 
