@@ -23,21 +23,21 @@ export function getActionInputs(): ActionInputs {
     slackToken: core.getInput('slack_token', { required: true }),
     slackChannel: core.getInput('slack_channel', { required: true }),
     notifyOn: core.getInput('notify_on', { required: false }) || 'always',
-    includeJobStatuses: core.getInput('msg_include_job_statuses', {
+    includeJobStatuses: core.getInput('include_job_statuses', {
       required: true
     }) as 'true' | 'false' | 'on-failure',
     includeJobDurations:
       core
-        .getInput('msg_include_job_durations', { required: false })
+        .getInput('include_job_durations', { required: false })
         ?.toLowerCase() !== 'false',
     filterJobs: core
-      .getInput('msg_job_filter', { required: false })
+      .getInput('filter_jobs', { required: false })
       ?.split(',')
       .map((s) => s.trim())
       .filter((s) => s.length > 0),
     includeCommitMessage:
-      core.getInput('msg_include_commit', { required: true }) === 'true',
-    customTitle: core.getInput('msg_custom_title', {
+      core.getInput('include_commit_msg', { required: true }) === 'true',
+    customTitle: core.getInput('custom_title', {
       required: false
     }),
     commentJunitFailures:

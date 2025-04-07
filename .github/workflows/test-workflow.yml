@@ -66,40 +66,43 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - name: Send Slack Notification
-          uses: midleman/slack-workflow-status@master # i'm using branch instead of version # for testing purposes. should use version #
+          uses: midleman/slack-workflow-status@mi/add-filter-jobs # i'm using branch instead of version # for testing purposes. should use version #
           with:
-            repo_token: ${{ secrets.GITHUB_TOKEN }}
+            gh_repo_token: ${{ secrets.GITHUB_TOKEN }}
             slack_token: ${{ secrets.SLACK_TOKEN }}
+            slack_channel: "U07KNKY6S5C"
             notify_on: "always"
-            channel: "U07KNKY6S5C"
-            # include_jobs: 'on-failure'
+            filter_jobs: "job-1,e2e-test-1"
+            # include_job_statuses: 'on-failure'
             # comment_junit_failures: "true"
             # comment_junit_flakes: "true"
-            # custom_message_title: "Testing my own comment title. <https://example.com|A link.>"
+            # custom_title: "Testing my own comment title. <https://example.com|A link.>"
 
-  # slack-notify-never:
-  #   if: always()
-  #   needs: [job-1, job-2, e2e-test-1, e2e-test-2]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Send Slack Notification
-  #       uses: midleman/slack-workflow-status@mi/fix-failed # for testing changes, use branch instead of version #
-  #       with:
-  #         repo_token: ${{ secrets.GITHUB_TOKEN }}
-  #         slack_token: ${{ secrets.SLACK_TOKEN }}
-  #         notify_on: "never"
-  #         channel: "U07KNKY6S5C"
+  slack-notify-never:
+    if: always()
+    needs: [job-1, job-2, e2e-test-1, e2e-test-2]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack Notification
+        uses: midleman/slack-workflow-status@mi/add-filter-jobs # for testing changes, use branch instead of version #
+        with:
+          gh_repo_token: ${{ secrets.GITHUB_TOKEN }}
+          slack_token: ${{ secrets.SLACK_TOKEN }}
+          slack_channel: "U07KNKY6S5C"
+          notify_on: "never"
 
-  # slack-notify-failure:
-  #   if: always()
-  #   needs: [job-1, job-2, e2e-test-1, e2e-test-2]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Send Slack Notification
-  #       uses: midleman/slack-workflow-status@mi/fix-failed # for testing changes, use branch instead of version #
-  #       with:
-  #         repo_token: ${{ secrets.GITHUB_TOKEN }}
-  #         slack_token: ${{ secrets.SLACK_TOKEN }}
-  #         notify_on: "failure"
-  #         channel: "U07KNKY6S5C"
+
+  slack-notify-failure:
+    if: always()
+    needs: [job-1, job-2, e2e-test-1, e2e-test-2]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack Notification
+        uses: midleman/slack-workflow-status@mi/add-filter-jobs # for testing changes, use branch instead of version #
+        with:
+          gh_repo_token: ${{ secrets.GITHUB_TOKEN }}
+          slack_token: ${{ secrets.SLACK_TOKEN }}
+          slack_channel: "U07KNKY6S5C"
+          notify_on: "failure"
+
 

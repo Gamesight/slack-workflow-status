@@ -27522,15 +27522,15 @@ function getActionInputs() {
         slackToken: core.getInput('slack_token', { required: true }),
         slackChannel: core.getInput('slack_channel', { required: true }),
         notifyOn: core.getInput('notify_on', { required: false }) || 'always',
-        includeJobStatuses: core.getInput('msg_include_job_statuses', {
+        includeJobStatuses: core.getInput('include_job_statuses', {
             required: true
         }),
         includeJobDurations: ((_a = core
-            .getInput('msg_include_job_durations', { required: false })) === null || _a === void 0 ? void 0 : _a.toLowerCase()) !== 'false',
+            .getInput('include_job_durations', { required: false })) === null || _a === void 0 ? void 0 : _a.toLowerCase()) !== 'false',
         filterJobs: (_b = core
-            .getInput('msg_job_filter', { required: false })) === null || _b === void 0 ? void 0 : _b.split(',').map((s) => s.trim()).filter((s) => s.length > 0),
-        includeCommitMessage: core.getInput('msg_include_commit', { required: true }) === 'true',
-        customTitle: core.getInput('msg_custom_title', {
+            .getInput('filter_jobs', { required: false })) === null || _b === void 0 ? void 0 : _b.split(',').map((s) => s.trim()).filter((s) => s.length > 0),
+        includeCommitMessage: core.getInput('include_commit_msg', { required: true }) === 'true',
+        customTitle: core.getInput('custom_title', {
             required: false
         }),
         commentJunitFailures: core.getInput('comment_junit_failures', { required: false }) === 'true',

@@ -19,19 +19,19 @@ This action posts workflow status notifications into your Slack channel. The not
 
 | Name                             | Required  | Default         | Description |
 |----------------------------------|-----------|-----------------|-------------|
-| **gh_repo_token**            | Yes       | -               | GitHub token for authentication, defaults to `${{secrets.GITHUB_TOKEN}}`. |
+| **gh_repo_token**                | Yes       | -               | GitHub token for authentication, defaults to `${{secrets.GITHUB_TOKEN}}`. |
 | **slack_token**                  | Yes       | -               | Slack token for posting notifications. |
 | **slack_channel**                | No        | -               | Slack channel to send notifications. |
 | **notify_on**                    | No        | `always`        | Controls when notifications are sent: `always`, `fail-only`, `never`. |
-| **msg_include_job_statuses**     | No        | `true`          | Includes job statuses in notifications. Use `false` to exclude or `on-failure` for failures only. |
-| **msg_include_job_durations**    | No        | `true`          | When `true`, includes job run times in the Slack notification. Requires: include_job_statuses. |
-| **msg_job_filter**               | No        | -               | Comma-separated list of jobs to include in the message. Requires: include_job_statuses. |
-| **msg_include_commit**           | No        | `true`          | When `true`, includes the head commit message in the notification. |
-| **msg_custom_title**             | No        | -               | Override the default slack message title with your own. |
-| **comment_junit_failures**   | No        | `false`         | When `true`, includes JUnit test failures in the Slack notification comment thread. |
-| **comment_junit_flakes**     | No        | `false`         | When `true`, includes JUnit test flakes in the Slack notification comment thread. |
-| **emoji_junit_failure**   | No        | `:x:`           | Emoji used for JUnit test failures. |
-| **emoji_junit_flake**     | No        | `:warning:`     | Emoji used for JUnit test flakes. |
+| **include_job_statuses**         | No        | `true`          | Includes job statuses in notifications. Use `false` to exclude or `on-failure` for failures only. |
+| **include_job_durations**        | No        | `true`          | When `true`, includes job run times in the Slack notification. Requires: include_job_statuses. |
+| **filter_jobs**                  | No        | -               | Comma-separated list of jobs to include in the message. Requires: include_job_statuses. |
+| **include_commit_msg**           | No        | `true`          | When `true`, includes the head commit message in the notification. |
+| **custom_title**                 | No        | -               | Override the default slack message title with your own. |
+| **comment_junit_failures**       | No        | `false`         | When `true`, includes JUnit test failures in the Slack notification comment thread. |
+| **comment_junit_flakes**         | No        | `false`         | When `true`, includes JUnit test flakes in the Slack notification comment thread. |
+| **emoji_junit_failure**          | No        | `:x:`           | Emoji used for JUnit test failures. |
+| **emoji_junit_flake**            | No        | `:warning:`     | Emoji used for JUnit test flakes. |
 | **jobs_to_fetch**                | No        | `30`            | Sets the number of jobs to fetch for workflows with a large number of jobs. |
 
 ## Composite Action Inputs
