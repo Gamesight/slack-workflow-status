@@ -28,6 +28,7 @@ export async function analyzeJobs({
     per_page: jobsToFetch
   })
 
+  console.log('filterJobs -->', filterJobs)
   const completedJobs = jobsResponse.jobs
     .filter((job) => job.status === 'completed')
     .filter((job) => !filterJobs || filterJobs.includes(job.name))

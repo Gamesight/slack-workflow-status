@@ -27400,6 +27400,7 @@ function analyzeJobs({ githubToken, workflowRun, notifyOn, jobsToFetch, filterJo
             run_id: workflowRun.id,
             per_page: jobsToFetch
         });
+        console.log('filterJobs -->', filterJobs);
         const completedJobs = jobsResponse.jobs
             .filter((job) => job.status === 'completed')
             .filter((job) => !filterJobs || filterJobs.includes(job.name));
