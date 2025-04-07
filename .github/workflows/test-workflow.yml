@@ -103,5 +103,6 @@ jobs:
           slack_token: ${{ secrets.SLACK_TOKEN }}
           slack_channel: "U07KNKY6S5C"
           notify_on: "failure"
+          filter_jobs: "e2e-test-1, e2e-test-2" # will only send notification for these jobs failing
 
 
