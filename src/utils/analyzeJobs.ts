@@ -5,13 +5,15 @@ export async function analyzeJobs({
   githubToken,
   workflowRun,
   notifyOn,
-  jobsToFetch
+  jobsToFetch,
+  filterJobs
 }: {
   githubToken: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   workflowRun: any
   notifyOn: string
   jobsToFetch: number
+  filterJobs?: string[]
 }): Promise<{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   completedJobs: any[]
@@ -26,9 +28,9 @@ export async function analyzeJobs({
     per_page: jobsToFetch
   })
 
-  const completedJobs = jobsResponse.jobs.filter(
-    (job) => job.status === 'completed'
-  )
+  const completedJobs = jobsResponse.jobs
+    .filter((job) => job.status === 'completed')
+    .filter((job) => filterJobs?.length === 0 || filterJobs?.includes(job.name))
 
   const hasFailures = completedJobs.some(
     (job) => !['success', 'skipped'].includes(job.conclusion)

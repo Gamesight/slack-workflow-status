@@ -5,8 +5,8 @@ import * as core from '@actions/core'
 
 export function buildJobSummary({
   completedJobs,
-  includeJobs,
-  includeJobsTime
+  includeJobStatuses,
+  includeJobDurations
 }: {
   completedJobs: {
     conclusion: string
@@ -15,8 +15,8 @@ export function buildJobSummary({
     started_at: string
     completed_at: string
   }[]
-  includeJobs: 'true' | 'false' | 'on-failure'
-  includeJobsTime: boolean
+  includeJobStatuses: 'true' | 'false' | 'on-failure'
+  includeJobDurations: boolean
 }): {
   workflowColor: string
   jobFields: SlackMessageAttachmentFields
@@ -33,7 +33,7 @@ export function buildJobSummary({
     job.conclusion.includes('fail')
   )
 
-  core.info(`includeJobs: ${includeJobs}`)
+  core.info(`includeJobStatuses: ${includeJobStatuses}`)
   // core.info(`completedJobs: ${JSON.stringify(completedJobs, null, 2)}`) // Pretty print JSON
   core.info(`allJobsSuccessful: ${allJobsSuccessful}`)
   core.info(`someJobsCancelled: ${someJobsCancelled}`)
@@ -47,12 +47,12 @@ export function buildJobSummary({
     : '#FF0000' // red (failure)
 
   // If 'false', don't report jobs at all
-  if (includeJobs === 'false') {
+  if (includeJobStatuses === 'false') {
     return { workflowColor, jobFields: [] }
   }
 
   // If 'on-failure' and no failures, don't report jobs
-  if (includeJobs === 'on-failure' && !someJobsFailed) {
+  if (includeJobStatuses === 'on-failure' && !someJobsFailed) {
     return { workflowColor, jobFields: [] }
   }
 
@@ -65,7 +65,7 @@ export function buildJobSummary({
         ? '⃠'
         : '✗'
 
-    const jobDuration = includeJobsTime
+    const jobDuration = includeJobDurations
       ? ` (${computeDuration({
           start: new Date(job.started_at),
           end: new Date(job.completed_at)
@@ -90,8 +90,8 @@ export function buildJobSummary({
 export function buildJobSummaryMessage({
   workflowRun,
   completedJobs,
-  includeJobs,
-  includeJobsTime,
+  includeJobStatuses,
+  includeJobDurations,
   actor,
   branchUrl,
   workflowRunUrl,
@@ -106,8 +106,8 @@ export function buildJobSummaryMessage({
     repository: { html_url: string; url: string }
   }
   completedJobs: any[]
-  includeJobs: 'true' | 'false' | 'on-failure'
-  includeJobsTime: boolean
+  includeJobStatuses: 'true' | 'false' | 'on-failure'
+  includeJobDurations: boolean
   actor: string
   branchUrl: string
   workflowRunUrl: string
@@ -119,8 +119,8 @@ export function buildJobSummaryMessage({
 } {
   const { workflowColor, jobFields } = buildJobSummary({
     completedJobs,
-    includeJobs,
-    includeJobsTime
+    includeJobStatuses,
+    includeJobDurations
   })
 
   const workflowDuration = computeDuration({

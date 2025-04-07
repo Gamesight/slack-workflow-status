@@ -27073,7 +27073,7 @@ function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const inputs = (0, inputs_1.getActionInputs)();
-            const { githubToken, slackToken, slackChannel, notifyOn, jobsToFetch, includeJobs, includeJobsTime, includeCommitMessage, commentJunitFailures, commentJunitFlakes, commentJunitFailuresEmoji, commentJunitFlakesEmoji, customMessageTitle } = inputs;
+            const { githubToken, slackToken, slackChannel, notifyOn, jobsToFetch, includeJobStatuses, includeJobDurations, includeCommitMessage, commentJunitFailures, commentJunitFlakes, emojiJunitFailures, emojiJunitFlakes, customTitle, filterJobs } = inputs;
             // Exit early if notifyOn is set to "never"
             if (notifyOn === 'never') {
                 core.info('No notification sent: "notifyOn" is set to "never". Exiting early.');
@@ -27088,7 +27088,8 @@ function main() {
                 githubToken,
                 workflowRun,
                 notifyOn,
-                jobsToFetch
+                jobsToFetch,
+                filterJobs
             });
             if (!shouldNotify) {
                 core.info('No notification sent: All jobs passed and "notifyOn" is set to "fail-only".');
@@ -27098,8 +27099,8 @@ function main() {
             const jobSummaryMessage = (0, buildJobSummaryMessage_1.buildJobSummaryMessage)({
                 workflowRun,
                 completedJobs,
-                includeJobs,
-                includeJobsTime,
+                includeJobStatuses,
+                includeJobDurations,
                 actor: workflowRun.actor.login,
                 branchUrl: `<${workflowRun.repository.html_url}/tree/${workflowRun.head_branch}|${workflowRun.head_branch}>`,
                 workflowRunUrl: `<${workflowRun.html_url}|#${workflowRun.run_number}>`,
@@ -27110,7 +27111,7 @@ function main() {
             const initialMessage = yield (0, sendSlackMessage_1.sendSlackMessage)({
                 slackToken,
                 channel: slackChannel,
-                message: customMessageTitle || jobSummaryMessage.text,
+                message: customTitle || jobSummaryMessage.text,
                 attachments: jobSummaryMessage.attachments
             });
             const threadTs = initialMessage.ts;
@@ -27123,8 +27124,8 @@ function main() {
                     reportUrls,
                     commentFailures: commentJunitFailures,
                     commentFlakes: commentJunitFlakes,
-                    commentJunitFailuresEmoji,
-                    commentJunitFlakesEmoji
+                    commentJunitFailuresEmoji: emojiJunitFailures,
+                    commentJunitFlakesEmoji: emojiJunitFlakes
                 });
                 // Comment on the initial message with the test summary
                 if (testSummaryThread) {
@@ -27180,12 +27181,12 @@ exports.buildJobSummaryMessage = exports.buildJobSummary = void 0;
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const computeDuration_1 = __nccwpck_require__(2752);
 const core = __importStar(__nccwpck_require__(7484));
-function buildJobSummary({ completedJobs, includeJobs, includeJobsTime }) {
+function buildJobSummary({ completedJobs, includeJobStatuses, includeJobDurations }) {
     let jobFields = [];
     const allJobsSuccessful = completedJobs.every((job) => ['success', 'skipped'].includes(job.conclusion));
     const someJobsCancelled = completedJobs.some((job) => job.conclusion === 'cancelled');
     const someJobsFailed = completedJobs.some((job) => job.conclusion.includes('fail'));
-    core.info(`includeJobs: ${includeJobs}`);
+    core.info(`includeJobStatuses: ${includeJobStatuses}`);
     // core.info(`completedJobs: ${JSON.stringify(completedJobs, null, 2)}`) // Pretty print JSON
     core.info(`allJobsSuccessful: ${allJobsSuccessful}`);
     core.info(`someJobsCancelled: ${someJobsCancelled}`);
@@ -27197,11 +27198,11 @@ function buildJobSummary({ completedJobs, includeJobs, includeJobsTime }) {
             ? 'warning'
             : '#FF0000'; // red (failure)
     // If 'false', don't report jobs at all
-    if (includeJobs === 'false') {
+    if (includeJobStatuses === 'false') {
         return { workflowColor, jobFields: [] };
     }
     // If 'on-failure' and no failures, don't report jobs
-    if (includeJobs === 'on-failure' && !someJobsFailed) {
+    if (includeJobStatuses === 'on-failure' && !someJobsFailed) {
         return { workflowColor, jobFields: [] };
     }
     // Build jobFields only if necessary
@@ -27211,7 +27212,7 @@ function buildJobSummary({ completedJobs, includeJobs, includeJobsTime }) {
             : ['cancelled', 'skipped'].includes(job.conclusion)
                 ? '⃠'
                 : '✗';
-        const jobDuration = includeJobsTime
+        const jobDuration = includeJobDurations
             ? ` (${(0, computeDuration_1.computeDuration)({
                 start: new Date(job.started_at),
                 end: new Date(job.completed_at)
@@ -27231,11 +27232,11 @@ exports.buildJobSummary = buildJobSummary;
  * @param param
  * @returns
  */
-function buildJobSummaryMessage({ workflowRun, completedJobs, includeJobs, includeJobsTime, actor, branchUrl, workflowRunUrl, repoUrl, commitMessage }) {
+function buildJobSummaryMessage({ workflowRun, completedJobs, includeJobStatuses, includeJobDurations, actor, branchUrl, workflowRunUrl, repoUrl, commitMessage }) {
     const { workflowColor, jobFields } = buildJobSummary({
         completedJobs,
-        includeJobs,
-        includeJobsTime
+        includeJobStatuses,
+        includeJobDurations
     });
     const workflowDuration = (0, computeDuration_1.computeDuration)({
         start: new Date(workflowRun.created_at),
@@ -27390,7 +27391,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.analyzeJobs = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const github_1 = __nccwpck_require__(3228);
-function analyzeJobs({ githubToken, workflowRun, notifyOn, jobsToFetch }) {
+function analyzeJobs({ githubToken, workflowRun, notifyOn, jobsToFetch, filterJobs }) {
     return __awaiter(this, void 0, void 0, function* () {
         const octokit = (0, github_1.getOctokit)(githubToken);
         const { data: jobsResponse } = yield octokit.actions.listJobsForWorkflowRun({
@@ -27399,7 +27400,9 @@ function analyzeJobs({ githubToken, workflowRun, notifyOn, jobsToFetch }) {
             run_id: workflowRun.id,
             per_page: jobsToFetch
         });
-        const completedJobs = jobsResponse.jobs.filter((job) => job.status === 'completed');
+        const completedJobs = jobsResponse.jobs
+            .filter((job) => job.status === 'completed')
+            .filter((job) => (filterJobs === null || filterJobs === void 0 ? void 0 : filterJobs.length) === 0 || (filterJobs === null || filterJobs === void 0 ? void 0 : filterJobs.includes(job.name)));
         const hasFailures = completedJobs.some((job) => !['success', 'skipped'].includes(job.conclusion));
         const shouldNotify = notifyOn === 'always' || (notifyOn.includes('fail') && hasFailures);
         if (shouldNotify) {
@@ -27513,26 +27516,28 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getActionInputs = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 function getActionInputs() {
-    var _a;
+    var _a, _b;
     return {
-        githubToken: core.getInput('repo_token', { required: true }),
-        jobsToFetch: parseInt(core.getInput('jobs_to_fetch', { required: true }), 30),
-        includeJobs: core.getInput('include_jobs', { required: true }),
-        includeCommitMessage: core.getInput('include_commit_message', { required: true }) === 'true',
-        includeJobsTime: ((_a = core.getInput('include_jobs_time', { required: false })) === null || _a === void 0 ? void 0 : _a.toLowerCase()) !==
-            'false',
+        githubToken: core.getInput('gh_repo_token', { required: true }),
         slackToken: core.getInput('slack_token', { required: true }),
-        slackChannel: core.getInput('channel', { required: true }),
+        slackChannel: core.getInput('slack_channel', { required: true }),
         notifyOn: core.getInput('notify_on', { required: false }) || 'always',
+        includeJobStatuses: core.getInput('include_job_statuses', {
+            required: false
+        }) || 'true',
+        includeJobDurations: ((_a = core
+            .getInput('include_job_durations', { required: false })) === null || _a === void 0 ? void 0 : _a.toLowerCase()) !== 'false',
+        filterJobs: (_b = core
+            .getInput('filter_jobs', { required: false })) === null || _b === void 0 ? void 0 : _b.split(',').map((s) => s.trim()).filter((s) => s.length > 0),
+        includeCommitMessage: core.getInput('include_commit_msg', { required: false }) !== 'false',
+        customTitle: core.getInput('custom_title', {
+            required: false
+        }),
         commentJunitFailures: core.getInput('comment_junit_failures', { required: false }) === 'true',
         commentJunitFlakes: core.getInput('comment_junit_flakes', { required: false }) === 'true',
-        commentJunitFailuresEmoji: core.getInput('comment_junit_failures_emoji', { required: false }) ||
-            ':x:',
-        commentJunitFlakesEmoji: core.getInput('comment_junit_flakes_emoji', { required: false }) ||
-            ':warning:',
-        customMessageTitle: core.getInput('custom_message_title', {
-            required: false
-        })
+        emojiJunitFailures: core.getInput('emoji_junit_failure', { required: false }) || ':x:',
+        emojiJunitFlakes: core.getInput('emoji_junit_flake', { required: false }) || ':warning:',
+        jobsToFetch: parseInt(core.getInput('jobs_to_fetch', { required: true }), 30)
     };
 }
 exports.getActionInputs = getActionInputs;
