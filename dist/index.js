@@ -27523,13 +27523,13 @@ function getActionInputs() {
         slackChannel: core.getInput('slack_channel', { required: true }),
         notifyOn: core.getInput('notify_on', { required: false }) || 'always',
         includeJobStatuses: core.getInput('include_job_statuses', {
-            required: true
-        }),
+            required: false
+        }) || 'true',
         includeJobDurations: ((_a = core
             .getInput('include_job_durations', { required: false })) === null || _a === void 0 ? void 0 : _a.toLowerCase()) !== 'false',
         filterJobs: (_b = core
             .getInput('filter_jobs', { required: false })) === null || _b === void 0 ? void 0 : _b.split(',').map((s) => s.trim()).filter((s) => s.length > 0),
-        includeCommitMessage: core.getInput('include_commit_msg', { required: true }) === 'true',
+        includeCommitMessage: core.getInput('include_commit_msg', { required: false }) !== 'false',
         customTitle: core.getInput('custom_title', {
             required: false
         }),

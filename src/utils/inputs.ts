@@ -37,7 +37,7 @@ export function getActionInputs(): ActionInputs {
       .map((s) => s.trim())
       .filter((s) => s.length > 0),
     includeCommitMessage:
-      core.getInput('include_commit_msg', { required: true }) === 'true',
+      core.getInput('include_commit_msg', { required: false }) !== 'false',
     customTitle: core.getInput('custom_title', {
       required: false
     }),
