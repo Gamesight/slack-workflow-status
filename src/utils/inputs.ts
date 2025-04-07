@@ -23,9 +23,10 @@ export function getActionInputs(): ActionInputs {
     slackToken: core.getInput('slack_token', { required: true }),
     slackChannel: core.getInput('slack_channel', { required: true }),
     notifyOn: core.getInput('notify_on', { required: false }) || 'always',
-    includeJobStatuses: core.getInput('include_job_statuses', {
-      required: true
-    }) as 'true' | 'false' | 'on-failure',
+    includeJobStatuses:
+      (core.getInput('include_job_statuses', {
+        required: false
+      }) as 'true' | 'false' | 'on-failure') || 'true',
     includeJobDurations:
       core
         .getInput('include_job_durations', { required: false })
