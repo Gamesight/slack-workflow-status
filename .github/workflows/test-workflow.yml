@@ -66,7 +66,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - name: Send Slack Notification
-          uses: midleman/slack-workflow-status@mi/add-filter-jobs # i'm using branch instead of version # for testing purposes. should use version #
+          uses: midleman/slack-workflow-status@mi/master # i'm using branch instead of version # for testing purposes. should use version #
           with:
             gh_repo_token: ${{ secrets.GITHUB_TOKEN }}
             slack_token: ${{ secrets.SLACK_TOKEN }}
