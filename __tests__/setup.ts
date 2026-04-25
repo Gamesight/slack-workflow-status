@@ -28,7 +28,10 @@ jest.mock('@actions/github', () => {
     getOctokit: () => ({
       rest: {
         actions: {
-          getWorkflowRun: async () => ({data: state.workflowRun}),
+          getWorkflowRun: async (params: Record<string, unknown>) => {
+            state.getWorkflowRunCalls.push(params)
+            return {data: state.workflowRun}
+          },
           listJobsForWorkflowRun: async (params: Record<string, unknown>) => {
             state.listJobsCalls.push(params)
             return {data: {jobs: state.jobs}}

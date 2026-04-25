@@ -253,6 +253,51 @@ describe('main()', () => {
     expect(state.listJobsCalls[0]).toMatchObject({per_page: 75})
   })
 
+  describe('workflow_run mode', () => {
+    it('reports on the upstream run id, event, and workflow name', async () => {
+      state.inputs.workflow_run = 'true'
+      state.context.eventName = 'workflow_run'
+      state.context.workflow = 'Notify'
+      state.context.runId = 999
+      state.context.payload = {
+        workflow_run: {id: 1234567, name: 'Upstream CI', event: 'pull_request'}
+      }
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      await main()
+
+      expect(state.getWorkflowRunCalls).toHaveLength(1)
+      expect(state.getWorkflowRunCalls[0]).toMatchObject({run_id: 1234567})
+      expect(state.listJobsCalls[0]).toMatchObject({run_id: 1234567})
+      const text = attachment().text
+      expect(text).toContain('`pull_request`')
+      expect(text).toContain('Workflow: Upstream CI')
+      expect(text).not.toContain('Workflow: Notify')
+    })
+
+    it('uses context.runId when workflow_run input is false (default)', async () => {
+      state.context.runId = 42
+      state.context.payload = {
+        workflow_run: {id: 9999, name: 'Other', event: 'push'}
+      }
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      await main()
+
+      expect(state.getWorkflowRunCalls[0]).toMatchObject({run_id: 42})
+      expect(state.listJobsCalls[0]).toMatchObject({run_id: 42})
+      expect(attachment().text).toContain('Workflow: CI')
+    })
+
+    it('throws when workflow_run is true but payload.workflow_run is absent', async () => {
+      state.inputs.workflow_run = 'true'
+      state.context.payload = {}
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      await expect(main()).rejects.toThrow(/workflow_run input is true/)
+    })
+  })
+
   it('marks the github_token and webhook_url as secrets', async () => {
     state.jobs = [makeJob({conclusion: 'success'})]
 

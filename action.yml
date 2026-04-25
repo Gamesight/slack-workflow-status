@@ -35,6 +35,10 @@ inputs:
     description: 'Number of jobs to fetch (for workflows with big number of jobs)'
     required: false
     default: '30'
+  workflow_run:
+    description: 'Set to "true" when this action runs in a workflow triggered by the workflow_run event, to report on the upstream workflow rather than the current one.'
+    required: false
+    default: 'false'
 runs:
   using: 'node24'
   main: 'dist/index.js'

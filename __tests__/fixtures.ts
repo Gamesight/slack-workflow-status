@@ -101,10 +101,26 @@ export const DEFAULT_INPUTS: Record<string, string> = {
   icon_emoji: ''
 }
 
-export const DEFAULT_CONTEXT = {
+export interface FakeWorkflowRunPayload {
+  id: number
+  name?: string
+  event?: string
+}
+
+export interface FakeContext {
+  repo: {owner: string; repo: string}
+  runId: number
+  actor: string
+  eventName: string
+  workflow: string
+  payload: {workflow_run?: FakeWorkflowRunPayload}
+}
+
+export const DEFAULT_CONTEXT: FakeContext = {
   repo: {owner: 'owner', repo: 'repo'},
   runId: 1,
   actor: 'octocat',
   eventName: 'push',
-  workflow: 'CI'
+  workflow: 'CI',
+  payload: {}
 }

@@ -19,6 +19,7 @@ This action will post workflow status notifications into your Slack channel. The
 | **name**                   | _optional_ | Allows you to provide a name for the slack bot user posting the notifications. Overrides the default name created with your webhook.
 | **icon_emoji**             | _optional_ | Allows you to provide an emoji as the slack bot user image when posting notifications. Overrides the default image created with your webhook. _[Emoji Code Cheat Sheet](https://www.webfx.com/tools/emoji-cheat-sheet/)_
 | **icon_url**               | _optional_ | Allows you to provide a URL for an image to use as the slack bot user image when posting notifications. Overrides the default image created with your webhook.
+| **workflow_run**           | _optional_ | Set to `"true"` when this action runs in a workflow triggered by the `workflow_run` event. The notification will then describe the upstream workflow that fired the event rather than this notifier workflow itself. Default is `"false"`.
 
 
 ## Usage

@@ -18,6 +18,7 @@ export interface MockState {
   slackPayloads: AnyPayload[]
   webhookUrls: string[]
   listJobsCalls: AnyPayload[]
+  getWorkflowRunCalls: AnyPayload[]
   sendShouldReject: Error | null
 }
 
@@ -35,6 +36,7 @@ function createEmptyState(): MockState {
     slackPayloads: [],
     webhookUrls: [],
     listJobsCalls: [],
+    getWorkflowRunCalls: [],
     sendShouldReject: null
   }
 }

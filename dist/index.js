@@ -34733,22 +34733,33 @@ async function main() {
     const slack_name = core.getInput('name');
     const slack_icon = core.getInput('icon_url');
     const slack_emoji = core.getInput('icon_emoji'); // https://www.webfx.com/tools/emoji-cheat-sheet/
+    const from_workflow_run = core.getInput('workflow_run') === 'true';
     // Force as secret, forces *** when trying to print or log values
     core.setSecret(github_token);
     core.setSecret(webhook_url);
     // Auth github with octokit module
     const octokit = (0, github_1.getOctokit)(github_token);
+    // When triggered by the `workflow_run` event, report on the upstream
+    // workflow that fired this notification workflow rather than the current run.
+    const upstream_run = from_workflow_run
+        ? github_1.context.payload.workflow_run
+        : undefined;
+    if (from_workflow_run && !upstream_run) {
+        throw new Error('workflow_run input is true but context.payload.workflow_run is missing. ' +
+            'This action must be triggered by the `workflow_run` event when workflow_run is enabled.');
+    }
+    const run_id = upstream_run ? upstream_run.id : github_1.context.runId;
     // Fetch workflow run data
     const { data: workflow_run } = await octokit.rest.actions.getWorkflowRun({
         owner: github_1.context.repo.owner,
         repo: github_1.context.repo.repo,
-        run_id: github_1.context.runId
+        run_id
     });
     // Fetch workflow job information
     const { data: jobs_response } = await octokit.rest.actions.listJobsForWorkflowRun({
         owner: github_1.context.repo.owner,
         repo: github_1.context.repo.repo,
-        run_id: github_1.context.runId,
+        run_id,
         per_page: parseInt(jobs_to_fetch, 10)
     });
     const completed_jobs = jobs_response.jobs.filter(job => job.status === 'completed');
@@ -34814,10 +34825,12 @@ async function main() {
     const repo_url = `<${workflow_run.repository.html_url}|*${workflow_run.repository.full_name}*>`;
     const branch_url = `<${workflow_run.repository.html_url}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`;
     const workflow_run_url = `<${workflow_run.html_url}|#${workflow_run.run_number}>`;
+    const event_name = upstream_run?.event ?? github_1.context.eventName;
+    const workflow_name = upstream_run?.name ?? github_1.context.workflow;
     // Example: Success: AnthonyKinson's `push` on `master` for pull_request
-    let status_string = `${workflow_msg} ${github_1.context.actor}'s \`${github_1.context.eventName}\` on \`${branch_url}\``;
+    let status_string = `${workflow_msg} ${github_1.context.actor}'s \`${event_name}\` on \`${branch_url}\``;
     // Example: Workflow: My Workflow #14 completed in `1m 30s`
-    const details_string = `Workflow: ${github_1.context.workflow} ${workflow_run_url} completed in \`${workflow_duration}\``;
+    const details_string = `Workflow: ${workflow_name} ${workflow_run_url} completed in \`${workflow_duration}\``;
     // Build Pull Request string if required
     const pull_requests = workflow_run.pull_requests
         .filter(pull_request => pull_request.base.repo.url === workflow_run.repository.url // exclude PRs from external repositories
