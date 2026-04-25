@@ -1,3 +1,5 @@
+import {beforeEach, describe, expect, it} from 'vitest'
+
 import {main} from '../src/main'
 import {makeJob, makePullRequest, makeWorkflowRun} from './fixtures'
 import {resetState, state} from './state'
@@ -46,10 +48,7 @@ describe('main()', () => {
   })
 
   it('treats skipped jobs as success', async () => {
-    state.jobs = [
-      makeJob({name: 'build', conclusion: 'success'}),
-      makeJob({name: 'deploy', conclusion: 'skipped'})
-    ]
+    state.jobs = [makeJob({name: 'build', conclusion: 'success'}), makeJob({name: 'deploy', conclusion: 'skipped'})]
 
     await main()
 
@@ -62,10 +61,7 @@ describe('main()', () => {
 
   it('reports failure when any job fails', async () => {
     state.workflowRun = makeWorkflowRun({conclusion: 'failure'})
-    state.jobs = [
-      makeJob({name: 'build', conclusion: 'success'}),
-      makeJob({name: 'test', conclusion: 'failure'})
-    ]
+    state.jobs = [makeJob({name: 'build', conclusion: 'success'}), makeJob({name: 'test', conclusion: 'failure'})]
 
     await main()
 
@@ -135,10 +131,7 @@ describe('main()', () => {
 
   it('reports cancelled when any job is cancelled', async () => {
     state.workflowRun = makeWorkflowRun({conclusion: 'cancelled'})
-    state.jobs = [
-      makeJob({name: 'build', conclusion: 'success'}),
-      makeJob({name: 'deploy', conclusion: 'cancelled'})
-    ]
+    state.jobs = [makeJob({name: 'build', conclusion: 'success'}), makeJob({name: 'deploy', conclusion: 'cancelled'})]
 
     await main()
 
@@ -151,10 +144,7 @@ describe('main()', () => {
 
   it('omits job fields when include_jobs=false', async () => {
     state.inputs.include_jobs = 'false'
-    state.jobs = [
-      makeJob({name: 'build', conclusion: 'success'}),
-      makeJob({name: 'test', conclusion: 'failure'})
-    ]
+    state.jobs = [makeJob({name: 'build', conclusion: 'success'}), makeJob({name: 'test', conclusion: 'failure'})]
 
     await main()
 
@@ -173,10 +163,7 @@ describe('main()', () => {
   it('includes job fields when include_jobs=on-failure and a job fails', async () => {
     state.inputs.include_jobs = 'on-failure'
     state.workflowRun = makeWorkflowRun({conclusion: 'failure'})
-    state.jobs = [
-      makeJob({name: 'build', conclusion: 'success'}),
-      makeJob({name: 'test', conclusion: 'failure'})
-    ]
+    state.jobs = [makeJob({name: 'build', conclusion: 'success'}), makeJob({name: 'test', conclusion: 'failure'})]
 
     await main()
 
@@ -315,15 +302,12 @@ describe('main()', () => {
   })
 
   it('appends extra_text to the message body when set', async () => {
-    state.inputs.extra_text =
-      'Deploy: https://example.com/release/42 cc <!channel>'
+    state.inputs.extra_text = 'Deploy: https://example.com/release/42 cc <!channel>'
     state.jobs = [makeJob({conclusion: 'success'})]
 
     await main()
 
-    expect(attachment().text).toContain(
-      'Deploy: https://example.com/release/42 cc <!channel>'
-    )
+    expect(attachment().text).toContain('Deploy: https://example.com/release/42 cc <!channel>')
   })
 
   it('omits extra_text when unset', async () => {
@@ -346,9 +330,7 @@ describe('main()', () => {
     await main()
 
     const text = attachment().text
-    expect(text.indexOf('Commit: fix: a bug')).toBeLessThan(
-      text.indexOf('extra context line')
-    )
+    expect(text.indexOf('Commit: fix: a bug')).toBeLessThan(text.indexOf('extra context line'))
   })
 
   it('falls back to plain workflow name when path is missing', async () => {
@@ -413,10 +395,7 @@ describe('main()', () => {
     it('still reports overall workflow color/text from real result', async () => {
       state.workflowRun = makeWorkflowRun({conclusion: 'failure'})
       state.inputs.hide_job_statuses = 'failure'
-      state.jobs = [
-        makeJob({name: 'build', conclusion: 'success'}),
-        makeJob({name: 'test', conclusion: 'failure'})
-      ]
+      state.jobs = [makeJob({name: 'build', conclusion: 'success'}), makeJob({name: 'test', conclusion: 'failure'})]
 
       await main()
 
@@ -428,10 +407,7 @@ describe('main()', () => {
     })
 
     it('shows every completed job by default (no input)', async () => {
-      state.jobs = [
-        makeJob({name: 'build', conclusion: 'success'}),
-        makeJob({name: 'lint', conclusion: 'skipped'})
-      ]
+      state.jobs = [makeJob({name: 'build', conclusion: 'success'}), makeJob({name: 'lint', conclusion: 'skipped'})]
 
       await main()
 
@@ -441,10 +417,7 @@ describe('main()', () => {
     it('composes with include_jobs=on-failure: section omitted on success', async () => {
       state.inputs.include_jobs = 'on-failure'
       state.inputs.hide_job_statuses = 'skipped'
-      state.jobs = [
-        makeJob({name: 'build', conclusion: 'success'}),
-        makeJob({name: 'lint', conclusion: 'skipped'})
-      ]
+      state.jobs = [makeJob({name: 'build', conclusion: 'success'}), makeJob({name: 'lint', conclusion: 'skipped'})]
 
       await main()
 
@@ -523,9 +496,7 @@ describe('main()', () => {
     await main()
 
     expect(state.setSecretCalls).toContain('ghp_faketoken')
-    expect(state.setSecretCalls).toContain(
-      'https://hooks.slack.example/T/B/xyz'
-    )
+    expect(state.setSecretCalls).toContain('https://hooks.slack.example/T/B/xyz')
   })
 
   describe('bot token mode (#40)', () => {
@@ -649,9 +620,7 @@ describe('main()', () => {
       state.inputs.slack_bot_token = ''
       state.jobs = [makeJob({conclusion: 'success'})]
 
-      await expect(main()).rejects.toThrow(
-        /Either slack_bot_token or slack_webhook_url is required/
-      )
+      await expect(main()).rejects.toThrow(/Either slack_bot_token or slack_webhook_url is required/)
     })
 
     it('throws when slack_bot_token is set but channel is empty', async () => {
@@ -660,9 +629,7 @@ describe('main()', () => {
       state.inputs.channel = ''
       state.jobs = [makeJob({conclusion: 'success'})]
 
-      await expect(main()).rejects.toThrow(
-        /channel is required when slack_bot_token is used/
-      )
+      await expect(main()).rejects.toThrow(/channel is required when slack_bot_token is used/)
     })
   })
 })

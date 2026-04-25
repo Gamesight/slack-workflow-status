@@ -19,7 +19,7 @@ export function makeJob(overrides: Partial<FakeJob> = {}): FakeJob {
   }
 }
 
-export interface FakePullRequest {
+interface FakePullRequest {
   url: string
   id: number
   number: number
@@ -37,9 +37,7 @@ export interface FakePullRequest {
 
 const SAME_REPO_URL = 'https://api.github.com/repos/owner/repo'
 
-export function makePullRequest(
-  overrides: Partial<FakePullRequest> = {}
-): FakePullRequest {
+export function makePullRequest(overrides: Partial<FakePullRequest> = {}): FakePullRequest {
   return {
     url: `${SAME_REPO_URL}/pulls/42`,
     id: 1001,
@@ -71,9 +69,7 @@ export interface FakeWorkflowRun {
   pull_requests: FakePullRequest[]
 }
 
-export function makeWorkflowRun(
-  overrides: Partial<FakeWorkflowRun> = {}
-): FakeWorkflowRun {
+export function makeWorkflowRun(overrides: Partial<FakeWorkflowRun> = {}): FakeWorkflowRun {
   return {
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:05:00Z',
@@ -108,13 +104,13 @@ export const DEFAULT_INPUTS: Record<string, string> = {
   icon_emoji: ''
 }
 
-export interface FakeWorkflowRunPayload {
+interface FakeWorkflowRunPayload {
   id: number
   name?: string
   event?: string
 }
 
-export interface FakeContext {
+interface FakeContext {
   repo: {owner: string; repo: string}
   runId: number
   actor: string

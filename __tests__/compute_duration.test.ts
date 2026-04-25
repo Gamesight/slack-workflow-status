@@ -1,8 +1,10 @@
-import {compute_duration} from '../src/main'
+import {describe, expect, it} from 'vitest'
 
-describe('compute_duration', () => {
+import {computeDuration} from '../src/format'
+
+describe('computeDuration', () => {
   function dur(ms: number): string {
-    return compute_duration({
+    return computeDuration({
       start: new Date(0),
       end: new Date(ms)
     })

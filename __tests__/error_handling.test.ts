@@ -1,3 +1,5 @@
+import {beforeEach, describe, expect, it} from 'vitest'
+
 import {handleError, main} from '../src/main'
 import {makeJob, makeWorkflowRun} from './fixtures'
 import {resetState, state} from './state'

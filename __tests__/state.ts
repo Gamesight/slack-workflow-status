@@ -1,9 +1,4 @@
-import {
-  DEFAULT_CONTEXT,
-  DEFAULT_INPUTS,
-  FakeJob,
-  FakeWorkflowRun
-} from './fixtures'
+import {DEFAULT_CONTEXT, DEFAULT_INPUTS, FakeJob, FakeWorkflowRun} from './fixtures'
 
 type AnyPayload = Record<string, unknown>
 
@@ -32,7 +27,10 @@ function createEmptyState(): MockState {
     inputs: {...DEFAULT_INPUTS},
     workflowRun: null,
     jobs: [],
-    context: {...DEFAULT_CONTEXT},
+    // Force a fresh payload object — `DEFAULT_CONTEXT.payload` would alias
+    // across resets, so a test mutating `state.context.payload` would leak
+    // into later tests.
+    context: {...DEFAULT_CONTEXT, payload: {}},
     setFailedCalls: [],
     setSecretCalls: [],
     errorCalls: [],
@@ -48,6 +46,5 @@ function createEmptyState(): MockState {
 }
 
 export function resetState(): void {
-  const fresh = createEmptyState()
-  Object.assign(state, fresh)
+  Object.assign(state, createEmptyState())
 }
