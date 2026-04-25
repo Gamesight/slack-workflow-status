@@ -44,6 +44,11 @@ interface PullRequest {
 type IncludeJobs = 'true' | 'false' | 'on-failure'
 type SlackMessageAttachementFields = MessageAttachment['fields']
 
+if (require.main === module) {
+  process.on('unhandledRejection', handleError)
+  main().catch(handleError) // eslint-disable-line github/no-then
+}
+
 // Action entrypoint
 export async function main(): Promise<void> {
   // Collect Action Inputs

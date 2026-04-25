@@ -13477,19 +13477,6 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 6144:
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const main_1 = __webpack_require__(399);
-process.on('unhandledRejection', main_1.handleError);
-(0, main_1.main)().catch(main_1.handleError); // eslint-disable-line github/no-then
-
-
-/***/ }),
-
 /***/ 399:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -13544,6 +13531,10 @@ exports.handleError = exports.compute_duration = exports.main = void 0;
 const core = __importStar(__webpack_require__(2186));
 const github_1 = __webpack_require__(5438);
 const webhook_1 = __webpack_require__(1095);
+if (require.main === require.cache[eval('__filename')]) {
+    process.on('unhandledRejection', handleError);
+    main().catch(handleError); // eslint-disable-line github/no-then
+}
 // Action entrypoint
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -18305,6 +18296,6 @@ module.exports = require("zlib");;
 /******/ 	// module exports must be returned from runtime so entry inlining is disabled
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(6144);
+/******/ 	return __webpack_require__(399);
 /******/ })()
 ;

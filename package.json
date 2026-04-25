@@ -18,7 +18,7 @@
     "node": ">=20.11.0"
   },
   "scripts": {
-    "build": "ncc build src/index.ts",
+    "build": "ncc build src/main.ts",
     "lint": "eslint 'src/**/*.ts'",
     "test": "jest"
   },
