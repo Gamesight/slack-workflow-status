@@ -26,7 +26,14 @@ inputs:
   include_jobs:
     description: 'Should the slack notification include individual job status and run times'
     required: true
-    default: "true"
+    default: 'true'
+  hide_job_statuses:
+    description: |
+      Comma-separated list of job conclusions to omit from the rendered job
+      list (e.g. "skipped" or "skipped,cancelled"). The overall workflow
+      color/text still reflects all jobs. Default is "" (no filtering).
+    required: false
+    default: ''
   include_commit_message:
     description: 'Should the slack notification include the head commit message'
     required: true

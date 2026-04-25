@@ -34726,6 +34726,11 @@ async function main() {
     const include_jobs = core.getInput('include_jobs', {
         required: true
     });
+    const hide_job_statuses = core
+        .getInput('hide_job_statuses')
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
     const include_commit_message = core.getInput('include_commit_message', {
         required: true
     }) === 'true';
@@ -34792,8 +34797,13 @@ async function main() {
     if (include_jobs === 'false') {
         job_fields = [];
     }
+    // Apply optional per-job denylist (e.g. hide_job_statuses: 'skipped').
+    // The workflow color/message above still reflects the real overall result.
+    const displayed_jobs = hide_job_statuses.length > 0
+        ? completed_jobs.filter(job => !hide_job_statuses.includes(job.conclusion ?? ''))
+        : completed_jobs;
     // Build Job Data Fields
-    job_fields ??= completed_jobs.map(job => {
+    job_fields ??= displayed_jobs.map(job => {
         let job_status_icon;
         switch (job.conclusion) {
             case 'success':

@@ -253,6 +253,115 @@ describe('main()', () => {
     expect(state.listJobsCalls[0]).toMatchObject({per_page: 75})
   })
 
+  describe('hide_job_statuses', () => {
+    it('hides skipped jobs while keeping success/failure visible (#55)', async () => {
+      state.inputs.hide_job_statuses = 'skipped'
+      state.jobs = [
+        makeJob({name: 'changes', conclusion: 'success'}),
+        makeJob({name: 'build', conclusion: 'success'}),
+        makeJob({name: 'deploy', conclusion: 'skipped'})
+      ]
+
+      await main()
+
+      const fields = attachment().fields
+      expect(fields).toHaveLength(2)
+      expect(fields.map(f => f.value).join('\n')).not.toMatch(/deploy/)
+    })
+
+    it('hides multiple statuses', async () => {
+      state.inputs.hide_job_statuses = 'skipped,cancelled'
+      state.jobs = [
+        makeJob({name: 'build', conclusion: 'success'}),
+        makeJob({name: 'lint', conclusion: 'skipped'}),
+        makeJob({name: 'test', conclusion: 'failure'}),
+        makeJob({name: 'deploy', conclusion: 'cancelled'})
+      ]
+
+      await main()
+
+      const fields = attachment().fields
+      const text = fields.map(f => f.value).join('\n')
+      expect(fields).toHaveLength(2)
+      expect(text).toMatch(/build/)
+      expect(text).toMatch(/test/)
+      expect(text).not.toMatch(/lint/)
+      expect(text).not.toMatch(/deploy/)
+    })
+
+    it('tolerates whitespace around status names', async () => {
+      state.inputs.hide_job_statuses = ' skipped , cancelled '
+      state.jobs = [
+        makeJob({name: 'build', conclusion: 'success'}),
+        makeJob({name: 'lint', conclusion: 'skipped'}),
+        makeJob({name: 'deploy', conclusion: 'cancelled'})
+      ]
+
+      await main()
+
+      expect(attachment().fields).toHaveLength(1)
+    })
+
+    it('still reports overall workflow color/text from real result', async () => {
+      state.inputs.hide_job_statuses = 'failure'
+      state.jobs = [
+        makeJob({name: 'build', conclusion: 'success'}),
+        makeJob({name: 'test', conclusion: 'failure'})
+      ]
+
+      await main()
+
+      const a = attachment()
+      expect(a.color).toBe('danger')
+      expect(a.text).toMatch(/^Failed:/)
+      expect(a.fields).toHaveLength(1)
+      expect(a.fields[0].value).toMatch(/build/)
+    })
+
+    it('shows every completed job by default (no input)', async () => {
+      state.jobs = [
+        makeJob({name: 'build', conclusion: 'success'}),
+        makeJob({name: 'lint', conclusion: 'skipped'})
+      ]
+
+      await main()
+
+      expect(attachment().fields).toHaveLength(2)
+    })
+
+    it('composes with include_jobs=on-failure: section omitted on success', async () => {
+      state.inputs.include_jobs = 'on-failure'
+      state.inputs.hide_job_statuses = 'skipped'
+      state.jobs = [
+        makeJob({name: 'build', conclusion: 'success'}),
+        makeJob({name: 'lint', conclusion: 'skipped'})
+      ]
+
+      await main()
+
+      expect(attachment().fields).toEqual([])
+    })
+
+    it('composes with include_jobs=on-failure: filter applied on failure', async () => {
+      state.inputs.include_jobs = 'on-failure'
+      state.inputs.hide_job_statuses = 'skipped'
+      state.jobs = [
+        makeJob({name: 'build', conclusion: 'success'}),
+        makeJob({name: 'lint', conclusion: 'skipped'}),
+        makeJob({name: 'test', conclusion: 'failure'})
+      ]
+
+      await main()
+
+      const fields = attachment().fields
+      const text = fields.map(f => f.value).join('\n')
+      expect(fields).toHaveLength(2)
+      expect(text).toMatch(/build/)
+      expect(text).toMatch(/test/)
+      expect(text).not.toMatch(/lint/)
+    })
+  })
+
   describe('workflow_run mode', () => {
     it('reports on the upstream run id, event, and workflow name', async () => {
       state.inputs.workflow_run = 'true'

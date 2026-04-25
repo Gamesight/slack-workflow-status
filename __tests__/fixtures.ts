@@ -94,6 +94,7 @@ export const DEFAULT_INPUTS: Record<string, string> = {
   repo_token: 'ghp_faketoken',
   jobs_to_fetch: '30',
   include_jobs: 'true',
+  hide_job_statuses: '',
   include_commit_message: 'false',
   channel: '',
   name: '',
