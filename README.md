@@ -73,5 +73,38 @@ This action can also be used for Pull Request workflows and will include pull re
 
 <img src="./docs/images/example-pr.png" title="Slack Pull Request Example">
 
+## Troubleshooting
+
+### `Resource not accessible by integration`
+
+This error means the token passed via `repo_token` lacks the permissions
+needed to read the workflow run and its jobs (issue #45). The action calls
+`actions.getWorkflowRun` and `actions.listJobsForWorkflowRun`, both of which
+require the `actions: read` permission on the token.
+
+If the workflow declares a top-level `permissions:` block, that block
+overrides the default `GITHUB_TOKEN` permissions for every job — including
+this one. You must explicitly grant `actions: read` either at the workflow
+level or on the notifier job:
+
+```yaml
+jobs:
+  slack-workflow-status:
+    permissions:
+      actions: read     # required: read this run's jobs
+      contents: read    # required when using `workflow_run`: read the upstream run
+    # ...
+```
+
+When using the `workflow_run` input, the notifier workflow runs in a
+separate context from the workflow it reports on. The `GITHUB_TOKEN` for `workflow_run`-triggered runs is
+issued against the *base* repository, so PRs from forks will work, but the
+token still needs `actions: read` and `contents: read` on the base repo.
+
+### Notification fires before all jobs finish
+
+Make sure the notifier job uses both `if: always()` and `needs:` listing
+every job you want it to wait on. Without `needs:` the notifier may run
+in parallel with your other jobs and report incomplete results.
 
 _developed and maintained by: [gamesight.io](https://gamesight.io)_
