@@ -632,4 +632,68 @@ describe('main()', () => {
       await expect(main()).rejects.toThrow(/channel is required when slack_bot_token is used/)
     })
   })
+
+  describe('in-flight workflow (notify-job-in-same-workflow pattern)', () => {
+    // When this action runs as a job inside the same workflow it's reporting
+    // on, the workflow itself isn't complete yet — `conclusion` is null.
+    // We must roll up the state from completed jobs instead of treating
+    // null as failure.
+
+    it('reports Success when conclusion is null and all completed jobs succeeded', async () => {
+      state.workflowRun = makeWorkflowRun({conclusion: null})
+      state.jobs = [
+        makeJob({name: 'build', conclusion: 'success'}),
+        makeJob({name: 'deploy', conclusion: 'success'})
+      ]
+
+      await main()
+
+      const a = attachment()
+      expect(a.color).toBe('good')
+      expect(a.text).toMatch(/^Success:/)
+    })
+
+    it('reports Failed when conclusion is null and any job failed', async () => {
+      state.workflowRun = makeWorkflowRun({conclusion: null})
+      state.jobs = [
+        makeJob({name: 'build', conclusion: 'success'}),
+        makeJob({name: 'deploy', conclusion: 'failure'})
+      ]
+
+      await main()
+
+      const a = attachment()
+      expect(a.color).toBe('danger')
+      expect(a.text).toMatch(/^Failed:/)
+    })
+  })
+
+  describe('workflow duration on re-runs', () => {
+    it('uses run_started_at (current attempt) rather than created_at', async () => {
+      // Original creation hours ago, but this attempt started 5m ago.
+      state.workflowRun = makeWorkflowRun({
+        created_at: '2026-01-01T00:00:00Z',
+        run_started_at: '2026-01-01T03:55:00Z',
+        updated_at: '2026-01-01T04:00:00Z'
+      })
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      await main()
+
+      expect(attachment().text).toMatch(/completed in `5m 0s`/)
+    })
+
+    it('falls back to created_at when run_started_at is absent', async () => {
+      state.workflowRun = makeWorkflowRun({
+        created_at: '2026-01-01T00:00:00Z',
+        run_started_at: undefined,
+        updated_at: '2026-01-01T00:02:00Z'
+      })
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      await main()
+
+      expect(attachment().text).toMatch(/completed in `2m 0s`/)
+    })
+  })
 })

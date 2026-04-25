@@ -28,9 +28,15 @@ export interface WorkflowStatus {
  *
  * Trusts `workflow_run.conclusion` as the source of truth — it correctly
  * accounts for `continue-on-error: true` jobs (issue #21). Falls back to
- * scanning job conclusions when the API reports `cancelled` but a job
- * actually failed: matrix fail-fast cancels still-running siblings, and the
- * workflow conclusion historically lied as `cancelled` in that case (#58).
+ * scanning job conclusions in two cases:
+ *
+ * 1. The API reports `cancelled` but a job actually failed — matrix
+ *    fail-fast cancels still-running siblings, and the workflow conclusion
+ *    historically lied as `cancelled` in that case (#58).
+ * 2. The conclusion is `null` (workflow still in progress). This happens
+ *    when this action runs as a notification job inside the same workflow
+ *    it's reporting on — the workflow isn't complete until *this* job
+ *    finishes. Roll up the state of the jobs we can see instead.
  */
 export function determineWorkflowStatus(workflow_run: WorkflowRun, completed_jobs: JobsList): WorkflowStatus {
   const any_job_failed = completed_jobs.some(job => !['success', 'skipped', 'cancelled'].includes(job.conclusion ?? ''))
@@ -45,9 +51,14 @@ export function determineWorkflowStatus(workflow_run: WorkflowRun, completed_job
         return {color: 'danger', verb: 'Failed:', outcome: 'failure'}
       }
       return {color: 'warning', verb: 'Cancelled:', outcome: 'cancelled'}
+    case null:
+      // Still in progress — we're a notification job inside the workflow.
+      return any_job_failed
+        ? {color: 'danger', verb: 'Failed:', outcome: 'failure'}
+        : {color: 'good', verb: 'Success:', outcome: 'success'}
     default:
-      // failure, timed_out, action_required, stale, null, or any new
-      // conclusion type GitHub adds.
+      // failure, timed_out, action_required, stale, or any new conclusion
+      // type GitHub adds.
       return {color: 'danger', verb: 'Failed:', outcome: 'failure'}
   }
 }

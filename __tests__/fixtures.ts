@@ -59,6 +59,7 @@ export function makePullRequest(overrides: Partial<FakePullRequest> = {}): FakeP
 export interface FakeWorkflowRun {
   created_at: string
   updated_at: string
+  run_started_at?: string
   html_url: string
   run_number: number
   head_branch: string
@@ -73,6 +74,7 @@ export function makeWorkflowRun(overrides: Partial<FakeWorkflowRun> = {}): FakeW
   return {
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:05:00Z',
+    run_started_at: '2026-01-01T00:00:00Z',
     html_url: 'https://github.com/owner/repo/actions/runs/1',
     run_number: 7,
     head_branch: 'main',

@@ -200,8 +200,11 @@ function composeMessageText(args: {
     : `${verb} ${context.actor}'s \`${event_name}\` on \`${branch_link}\``
 
   // Example: Workflow: My Workflow #14 completed in `1m 30s`
+  // `run_started_at` reflects the *current* attempt's start (resets on
+  // re-runs); `created_at` is the original creation and would otherwise
+  // span all the wall time between attempts.
   const workflow_duration = computeDuration({
-    start: new Date(workflow_run.created_at),
+    start: new Date(workflow_run.run_started_at ?? workflow_run.created_at),
     end: new Date(workflow_run.updated_at)
   })
   const details = `Workflow: ${workflow_link} ${run_link} completed in \`${workflow_duration}\``
