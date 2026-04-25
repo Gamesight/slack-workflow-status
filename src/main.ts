@@ -44,11 +44,8 @@ interface PullRequest {
 type IncludeJobs = 'true' | 'false' | 'on-failure'
 type SlackMessageAttachementFields = MessageAttachment['fields']
 
-process.on('unhandledRejection', handleError)
-main().catch(handleError) // eslint-disable-line github/no-then
-
 // Action entrypoint
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
   // Collect Action Inputs
   const webhook_url = core.getInput('slack_webhook_url', {
     required: true
@@ -216,7 +213,13 @@ async function main(): Promise<void> {
 }
 
 // Converts start and end dates into a duration string
-function compute_duration({start, end}: {start: Date; end: Date}): string {
+export function compute_duration({
+  start,
+  end
+}: {
+  start: Date
+  end: Date
+}): string {
   // FIXME: https://github.com/microsoft/TypeScript/issues/2361
   const duration = end.valueOf() - start.valueOf()
   let delta = duration / 1000
@@ -242,7 +245,7 @@ function compute_duration({start, end}: {start: Date; end: Date}): string {
   )
 }
 
-function handleError(err: Error): void {
+export function handleError(err: Error): void {
   core.error(err)
   if (err && err.message) {
     core.setFailed(err.message)
