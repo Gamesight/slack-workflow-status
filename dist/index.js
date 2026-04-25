@@ -13579,7 +13579,7 @@ function main() {
             owner: github_1.context.repo.owner,
             repo: github_1.context.repo.repo,
             run_id: github_1.context.runId,
-            per_page: parseInt(jobs_to_fetch, 30),
+            per_page: parseInt(jobs_to_fetch, 10),
         });
         const completed_jobs = jobs_response.jobs.filter(job => job.status === 'completed');
         // Configure slack attachment styling

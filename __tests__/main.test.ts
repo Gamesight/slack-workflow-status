@@ -230,17 +230,14 @@ describe('main()', () => {
     expect(p).not.toHaveProperty('icon_url')
   })
 
-  // Locks in the current (buggy) parseInt(jobs_to_fetch, 30) behavior at
-  // src/main.ts — the '30' is passed as a radix, not a default. If
-  // modernization fixes that, this test will fail and force a deliberate choice.
-  it('forwards jobs_to_fetch through parseInt(_, 30) as per_page', async () => {
+  it('forwards jobs_to_fetch as per_page', async () => {
     state.inputs.jobs_to_fetch = '75'
     state.jobs = [makeJob({conclusion: 'success'})]
 
     await main()
 
     expect(state.listJobsCalls).toHaveLength(1)
-    expect(state.listJobsCalls[0]).toMatchObject({per_page: 215})
+    expect(state.listJobsCalls[0]).toMatchObject({per_page: 75})
   })
 
   it('marks the github_token and webhook_url as secrets', async () => {

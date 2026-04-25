@@ -80,7 +80,7 @@ export async function main(): Promise<void> {
     owner: context.repo.owner,
     repo: context.repo.repo,
     run_id: context.runId,
-    per_page: parseInt(jobs_to_fetch, 30),
+    per_page: parseInt(jobs_to_fetch, 10),
   })
 
   const completed_jobs = jobs_response.jobs.filter(
