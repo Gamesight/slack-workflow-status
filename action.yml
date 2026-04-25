@@ -11,7 +11,8 @@ inputs:
   slack_webhook_url:
     description: |
       Slack Incoming Webhook URL. Provide either this or `slack_bot_token`
-      (not both). Recommended via `${{secrets.SLACK_WEBHOOK_URL}}`.
+      (not both). Recommended source: a repository secret named
+      `SLACK_WEBHOOK_URL` referenced from your workflow.
     required: false
   slack_bot_token:
     description: |
