@@ -61,6 +61,7 @@ describe('main()', () => {
   })
 
   it('reports failure when any job fails', async () => {
+    state.workflowRun = makeWorkflowRun({conclusion: 'failure'})
     state.jobs = [
       makeJob({name: 'build', conclusion: 'success'}),
       makeJob({name: 'test', conclusion: 'failure'})
@@ -75,7 +76,51 @@ describe('main()', () => {
     expect(failed?.value).toContain('✗')
   })
 
+  it('reports Success when continue-on-error job fails but workflow conclusion is success (#21)', async () => {
+    // continue-on-error: true on an experimental shard means a job can have
+    // conclusion: 'failure' while the workflow's overall conclusion is
+    // 'success'. The notification should follow the workflow's conclusion.
+    state.workflowRun = makeWorkflowRun({conclusion: 'success'})
+    state.jobs = [
+      makeJob({name: 'build', conclusion: 'success'}),
+      makeJob({name: 'experimental-shard', conclusion: 'failure'})
+    ]
+
+    await main()
+
+    const a = attachment()
+    expect(a.color).toBe('good')
+    expect(a.text).toMatch(/^Success:/)
+    // The failing experimental job is still rendered with its own ✗ icon.
+    const exp = a.fields.find(f => f.value.includes('experimental-shard'))
+    expect(exp?.value).toContain('✗')
+  })
+
+  it('reports Failed when workflow conclusion is timed_out', async () => {
+    state.workflowRun = makeWorkflowRun({conclusion: 'timed_out'})
+    state.jobs = [makeJob({name: 'long-job', conclusion: 'failure'})]
+
+    await main()
+
+    expect(attachment().color).toBe('danger')
+    expect(attachment().text).toMatch(/^Failed:/)
+  })
+
+  it('reports Success when workflow conclusion is neutral', async () => {
+    state.workflowRun = makeWorkflowRun({conclusion: 'neutral'})
+    state.jobs = [makeJob({name: 'check', conclusion: 'neutral'})]
+
+    await main()
+
+    expect(attachment().color).toBe('good')
+    expect(attachment().text).toMatch(/^Success:/)
+  })
+
   it('reports Failed when failure and cancelled coexist (matrix fail-fast, #58)', async () => {
+    // Reproduces the historical case where workflow_run.conclusion lied as
+    // 'cancelled' even though one shard genuinely failed before fail-fast
+    // cancelled the rest. The defensive scan of job conclusions catches this.
+    state.workflowRun = makeWorkflowRun({conclusion: 'cancelled'})
     state.jobs = [
       makeJob({name: 'shard-1', conclusion: 'failure'}),
       makeJob({name: 'shard-2', conclusion: 'cancelled'})
@@ -89,6 +134,7 @@ describe('main()', () => {
   })
 
   it('reports cancelled when any job is cancelled', async () => {
+    state.workflowRun = makeWorkflowRun({conclusion: 'cancelled'})
     state.jobs = [
       makeJob({name: 'build', conclusion: 'success'}),
       makeJob({name: 'deploy', conclusion: 'cancelled'})
@@ -126,6 +172,7 @@ describe('main()', () => {
 
   it('includes job fields when include_jobs=on-failure and a job fails', async () => {
     state.inputs.include_jobs = 'on-failure'
+    state.workflowRun = makeWorkflowRun({conclusion: 'failure'})
     state.jobs = [
       makeJob({name: 'build', conclusion: 'success'}),
       makeJob({name: 'test', conclusion: 'failure'})
@@ -364,6 +411,7 @@ describe('main()', () => {
     })
 
     it('still reports overall workflow color/text from real result', async () => {
+      state.workflowRun = makeWorkflowRun({conclusion: 'failure'})
       state.inputs.hide_job_statuses = 'failure'
       state.jobs = [
         makeJob({name: 'build', conclusion: 'success'}),
@@ -404,6 +452,7 @@ describe('main()', () => {
     })
 
     it('composes with include_jobs=on-failure: filter applied on failure', async () => {
+      state.workflowRun = makeWorkflowRun({conclusion: 'failure'})
       state.inputs.include_jobs = 'on-failure'
       state.inputs.hide_job_statuses = 'skipped'
       state.jobs = [

@@ -65,6 +65,7 @@ export interface FakeWorkflowRun {
   run_number: number
   head_branch: string
   path: string
+  conclusion: string | null
   repository: {html_url: string; full_name: string; url: string}
   head_commit: {message: string}
   pull_requests: FakePullRequest[]
@@ -80,6 +81,7 @@ export function makeWorkflowRun(
     run_number: 7,
     head_branch: 'main',
     path: '.github/workflows/ci.yml',
+    conclusion: 'success',
     repository: {
       html_url: 'https://github.com/owner/repo',
       full_name: 'owner/repo',

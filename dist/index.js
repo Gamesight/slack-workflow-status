@@ -34769,31 +34769,46 @@ async function main() {
         per_page: parseInt(jobs_to_fetch, 10)
     });
     const completed_jobs = jobs_response.jobs.filter(job => job.status === 'completed');
-    // Configure slack attachment styling
+    // Configure slack attachment styling. Trust workflow_run.conclusion as the
+    // source of truth — it correctly accounts for `continue-on-error: true` jobs
+    // (issue #21: an experimental shard can fail without failing the workflow).
+    // Fall back to scanning job conclusions when the API reports `cancelled` but
+    // a job actually failed: matrix fail-fast cancels still-running siblings,
+    // and historically the workflow conclusion lied as `cancelled` in that case
+    // (issue #58). Defensive fallback covers us either way.
     let workflow_color; // can be good, danger, warning or a HEX colour (#00FF00)
     let workflow_msg;
     let job_fields;
-    if (completed_jobs.every(job => ['success', 'skipped'].includes(job.conclusion ?? ''))) {
-        workflow_color = 'good';
-        workflow_msg = 'Success:';
-        if (include_jobs === 'on-failure') {
-            job_fields = [];
-        }
-    }
-    else if (completed_jobs.some(job => !['success', 'skipped', 'cancelled'].includes(job.conclusion ?? ''))) {
-        // Any conclusion outside success/skipped/cancelled (failure, timed_out,
-        // action_required, neutral, stale, ...) wins over a sibling cancellation:
-        // matrix fail-fast cancels still-running jobs but the workflow really did
-        // fail. Issue #58.
-        workflow_color = 'danger';
-        workflow_msg = 'Failed:';
-    }
-    else {
-        workflow_color = 'warning';
-        workflow_msg = 'Cancelled:';
-        if (include_jobs === 'on-failure') {
-            job_fields = [];
-        }
+    const any_job_failed = completed_jobs.some(job => !['success', 'skipped', 'cancelled'].includes(job.conclusion ?? ''));
+    switch (workflow_run.conclusion) {
+        case 'success':
+        case 'skipped':
+        case 'neutral':
+            workflow_color = 'good';
+            workflow_msg = 'Success:';
+            if (include_jobs === 'on-failure') {
+                job_fields = [];
+            }
+            break;
+        case 'cancelled':
+            if (any_job_failed) {
+                // Matrix fail-fast lying through its teeth (#58).
+                workflow_color = 'danger';
+                workflow_msg = 'Failed:';
+            }
+            else {
+                workflow_color = 'warning';
+                workflow_msg = 'Cancelled:';
+                if (include_jobs === 'on-failure') {
+                    job_fields = [];
+                }
+            }
+            break;
+        default:
+            // failure, timed_out, action_required, stale, null (still running but
+            // shouldn't happen here), or any new conclusion type GitHub adds.
+            workflow_color = 'danger';
+            workflow_msg = 'Failed:';
     }
     if (include_jobs === 'false') {
         job_fields = [];
