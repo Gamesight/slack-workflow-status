@@ -4,7 +4,7 @@ describe('compute_duration', () => {
   function dur(ms: number): string {
     return compute_duration({
       start: new Date(0),
-      end: new Date(ms),
+      end: new Date(ms)
     })
   }
 
@@ -21,8 +21,7 @@ describe('compute_duration', () => {
   })
 
   it('formats days, hours, minutes, and seconds', () => {
-    const ms =
-      1 * 86_400_000 + 2 * 3_600_000 + 3 * 60_000 + 4 * 1_000
+    const ms = 1 * 86_400_000 + 2 * 3_600_000 + 3 * 60_000 + 4 * 1_000
     expect(dur(ms)).toBe('1d 2h 3m 4s')
   })
 

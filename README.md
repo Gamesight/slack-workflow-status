@@ -1,4 +1,7 @@
 # Slack Workflow Status
+
+[![CI](https://github.com/Gamesight/slack-workflow-status/actions/workflows/ci.yml/badge.svg)](https://github.com/Gamesight/slack-workflow-status/actions/workflows/ci.yml)
+
 This action will post workflow status notifications into your Slack channel. The notification includes the name of the Actor, Event, Branch, Workflow Name, Status and Run Durations. This action can optionally include the status and duration of individual jobs in a workflow to quickly help you identify where failures and slowdowns occur.
 
 <img src="./docs/images/example.png" title="Slack Example">

@@ -2,7 +2,7 @@ import {
   DEFAULT_CONTEXT,
   DEFAULT_INPUTS,
   FakeJob,
-  FakeWorkflowRun,
+  FakeWorkflowRun
 } from './fixtures'
 
 type AnyPayload = Record<string, unknown>
@@ -35,7 +35,7 @@ function createEmptyState(): MockState {
     slackPayloads: [],
     webhookUrls: [],
     listJobsCalls: [],
-    sendShouldReject: null,
+    sendShouldReject: null
   }
 }
 

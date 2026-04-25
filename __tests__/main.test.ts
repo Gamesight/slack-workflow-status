@@ -48,7 +48,7 @@ describe('main()', () => {
   it('treats skipped jobs as success', async () => {
     state.jobs = [
       makeJob({name: 'build', conclusion: 'success'}),
-      makeJob({name: 'deploy', conclusion: 'skipped'}),
+      makeJob({name: 'deploy', conclusion: 'skipped'})
     ]
 
     await main()
@@ -63,7 +63,7 @@ describe('main()', () => {
   it('reports failure when any job fails', async () => {
     state.jobs = [
       makeJob({name: 'build', conclusion: 'success'}),
-      makeJob({name: 'test', conclusion: 'failure'}),
+      makeJob({name: 'test', conclusion: 'failure'})
     ]
 
     await main()
@@ -78,7 +78,7 @@ describe('main()', () => {
   it('reports Failed when failure and cancelled coexist (matrix fail-fast, #58)', async () => {
     state.jobs = [
       makeJob({name: 'shard-1', conclusion: 'failure'}),
-      makeJob({name: 'shard-2', conclusion: 'cancelled'}),
+      makeJob({name: 'shard-2', conclusion: 'cancelled'})
     ]
 
     await main()
@@ -91,7 +91,7 @@ describe('main()', () => {
   it('reports cancelled when any job is cancelled', async () => {
     state.jobs = [
       makeJob({name: 'build', conclusion: 'success'}),
-      makeJob({name: 'deploy', conclusion: 'cancelled'}),
+      makeJob({name: 'deploy', conclusion: 'cancelled'})
     ]
 
     await main()
@@ -107,7 +107,7 @@ describe('main()', () => {
     state.inputs.include_jobs = 'false'
     state.jobs = [
       makeJob({name: 'build', conclusion: 'success'}),
-      makeJob({name: 'test', conclusion: 'failure'}),
+      makeJob({name: 'test', conclusion: 'failure'})
     ]
 
     await main()
@@ -128,7 +128,7 @@ describe('main()', () => {
     state.inputs.include_jobs = 'on-failure'
     state.jobs = [
       makeJob({name: 'build', conclusion: 'success'}),
-      makeJob({name: 'test', conclusion: 'failure'}),
+      makeJob({name: 'test', conclusion: 'failure'})
     ]
 
     await main()
@@ -140,7 +140,7 @@ describe('main()', () => {
   it('filters out non-completed jobs from fields', async () => {
     state.jobs = [
       makeJob({name: 'build', conclusion: 'success'}),
-      makeJob({name: 'in-progress-job', status: 'in_progress'}),
+      makeJob({name: 'in-progress-job', status: 'in_progress'})
     ]
 
     await main()
@@ -153,7 +153,7 @@ describe('main()', () => {
   it('appends commit message when include_commit_message=true', async () => {
     state.inputs.include_commit_message = 'true'
     state.workflowRun = makeWorkflowRun({
-      head_commit: {message: 'my specific commit msg'},
+      head_commit: {message: 'my specific commit msg'}
     })
     state.jobs = [makeJob({conclusion: 'success'})]
 
@@ -165,7 +165,7 @@ describe('main()', () => {
   it('omits commit message when include_commit_message=false', async () => {
     state.inputs.include_commit_message = 'false'
     state.workflowRun = makeWorkflowRun({
-      head_commit: {message: 'should not appear'},
+      head_commit: {message: 'should not appear'}
     })
     state.jobs = [makeJob({conclusion: 'success'})]
 
@@ -177,7 +177,7 @@ describe('main()', () => {
 
   it('uses pull_request status form when PRs are present', async () => {
     state.workflowRun = makeWorkflowRun({
-      pull_requests: [makePullRequest({number: 42})],
+      pull_requests: [makePullRequest({number: 42})]
     })
     state.jobs = [makeJob({conclusion: 'success'})]
 
@@ -199,11 +199,11 @@ describe('main()', () => {
             repo: {
               id: 2,
               url: 'https://api.github.com/repos/other/repo',
-              name: 'repo',
-            },
-          },
-        }),
-      ],
+              name: 'repo'
+            }
+          }
+        })
+      ]
     })
     state.jobs = [makeJob({conclusion: 'success'})]
 
@@ -259,6 +259,8 @@ describe('main()', () => {
     await main()
 
     expect(state.setSecretCalls).toContain('ghp_faketoken')
-    expect(state.setSecretCalls).toContain('https://hooks.slack.example/T/B/xyz')
+    expect(state.setSecretCalls).toContain(
+      'https://hooks.slack.example/T/B/xyz'
+    )
   })
 })

@@ -14,7 +14,7 @@ jest.mock('@actions/core', () => {
     },
     error: (e: unknown): void => {
       state.errorCalls.push(e)
-    },
+    }
   }
 })
 
@@ -26,14 +26,16 @@ jest.mock('@actions/github', () => {
       return state.context
     },
     getOctokit: () => ({
-      actions: {
-        getWorkflowRun: async () => ({data: state.workflowRun}),
-        listJobsForWorkflowRun: async (params: Record<string, unknown>) => {
-          state.listJobsCalls.push(params)
-          return {data: {jobs: state.jobs}}
-        },
-      },
-    }),
+      rest: {
+        actions: {
+          getWorkflowRun: async () => ({data: state.workflowRun}),
+          listJobsForWorkflowRun: async (params: Record<string, unknown>) => {
+            state.listJobsCalls.push(params)
+            return {data: {jobs: state.jobs}}
+          }
+        }
+      }
+    })
   }
 })
 

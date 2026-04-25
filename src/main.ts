@@ -56,7 +56,7 @@ export async function main(): Promise<void> {
     required: true
   })
   const github_token = core.getInput('repo_token', {required: true})
-  const jobs_to_fetch = core.getInput("jobs_to_fetch", {required: true})
+  const jobs_to_fetch = core.getInput('jobs_to_fetch', {required: true})
   const include_jobs = core.getInput('include_jobs', {
     required: true
   }) as IncludeJobs
@@ -74,19 +74,20 @@ export async function main(): Promise<void> {
   // Auth github with octokit module
   const octokit = getOctokit(github_token)
   // Fetch workflow run data
-  const {data: workflow_run} = await octokit.actions.getWorkflowRun({
+  const {data: workflow_run} = await octokit.rest.actions.getWorkflowRun({
     owner: context.repo.owner,
     repo: context.repo.repo,
     run_id: context.runId
   })
 
   // Fetch workflow job information
-  const {data: jobs_response} = await octokit.actions.listJobsForWorkflowRun({
-    owner: context.repo.owner,
-    repo: context.repo.repo,
-    run_id: context.runId,
-    per_page: parseInt(jobs_to_fetch, 10),
-  })
+  const {data: jobs_response} =
+    await octokit.rest.actions.listJobsForWorkflowRun({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      run_id: context.runId,
+      per_page: parseInt(jobs_to_fetch, 10)
+    })
 
   const completed_jobs = jobs_response.jobs.filter(
     job => job.status === 'completed'
@@ -99,7 +100,9 @@ export async function main(): Promise<void> {
   let job_fields: SlackMessageAttachementFields
 
   if (
-    completed_jobs.every(job => ['success', 'skipped'].includes(job.conclusion))
+    completed_jobs.every(job =>
+      ['success', 'skipped'].includes(job.conclusion ?? '')
+    )
   ) {
     workflow_color = 'good'
     workflow_msg = 'Success:'
@@ -108,7 +111,7 @@ export async function main(): Promise<void> {
     }
   } else if (
     completed_jobs.some(
-      job => !['success', 'skipped', 'cancelled'].includes(job.conclusion)
+      job => !['success', 'skipped', 'cancelled'].includes(job.conclusion ?? '')
     )
   ) {
     // Any conclusion outside success/skipped/cancelled (failure, timed_out,
@@ -148,7 +151,7 @@ export async function main(): Promise<void> {
 
     const job_duration = compute_duration({
       start: new Date(job.started_at),
-      end: new Date(job.completed_at)
+      end: new Date(job.completed_at ?? job.started_at)
     })
 
     return {
@@ -174,8 +177,7 @@ export async function main(): Promise<void> {
   // Build Pull Request string if required
   const pull_requests = (workflow_run.pull_requests as PullRequest[])
     .filter(
-      pull_request =>
-        pull_request.base.repo.url === workflow_run.repository.url // exclude PRs from external repositories
+      pull_request => pull_request.base.repo.url === workflow_run.repository.url // exclude PRs from external repositories
     )
     .map(
       pull_request =>
@@ -187,7 +189,7 @@ export async function main(): Promise<void> {
     status_string = `${workflow_msg} ${context.actor}'s \`pull_request\` ${pull_requests}`
   }
 
-  const commit_message = `Commit: ${workflow_run.head_commit.message}`
+  const commit_message = `Commit: ${workflow_run.head_commit?.message ?? ''}`
 
   // We're using old style attachments rather than the new blocks because:
   // - Blocks don't allow colour indicators on messages

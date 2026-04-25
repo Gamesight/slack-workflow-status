@@ -15,7 +15,7 @@ export function makeJob(overrides: Partial<FakeJob> = {}): FakeJob {
     html_url: 'https://github.com/owner/repo/actions/runs/1/jobs/10',
     started_at: '2026-01-01T00:00:00Z',
     completed_at: '2026-01-01T00:01:30Z',
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -47,14 +47,14 @@ export function makePullRequest(
     head: {
       ref: 'feature-branch',
       sha: 'abc123',
-      repo: {id: 1, url: SAME_REPO_URL, name: 'repo'},
+      repo: {id: 1, url: SAME_REPO_URL, name: 'repo'}
     },
     base: {
       ref: 'main',
       sha: 'def456',
-      repo: {id: 1, url: SAME_REPO_URL, name: 'repo'},
+      repo: {id: 1, url: SAME_REPO_URL, name: 'repo'}
     },
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -81,11 +81,11 @@ export function makeWorkflowRun(
     repository: {
       html_url: 'https://github.com/owner/repo',
       full_name: 'owner/repo',
-      url: SAME_REPO_URL,
+      url: SAME_REPO_URL
     },
     head_commit: {message: 'commit message here'},
     pull_requests: [],
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -98,7 +98,7 @@ export const DEFAULT_INPUTS: Record<string, string> = {
   channel: '',
   name: '',
   icon_url: '',
-  icon_emoji: '',
+  icon_emoji: ''
 }
 
 export const DEFAULT_CONTEXT = {
@@ -106,5 +106,5 @@ export const DEFAULT_CONTEXT = {
   runId: 1,
   actor: 'octocat',
   eventName: 'push',
-  workflow: 'CI',
+  workflow: 'CI'
 }
