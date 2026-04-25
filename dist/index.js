@@ -34837,10 +34837,17 @@ async function main() {
     const workflow_run_url = `<${workflow_run.html_url}|#${workflow_run.run_number}>`;
     const event_name = upstream_run?.event ?? github_1.context.eventName;
     const workflow_name = upstream_run?.name ?? github_1.context.workflow;
+    // Hyperlink the workflow name to its history page filtered by branch.
+    // workflow_run.path is `.github/workflows/<file>`; the canonical UI URL
+    // uses `actions/workflows/<file>`. Falls back to plain text if path missing.
+    const workflow_file = workflow_run.path?.split('/').pop();
+    const workflow_name_link = workflow_file
+        ? `<${workflow_run.repository.html_url}/actions/workflows/${workflow_file}?query=branch%3A${encodeURIComponent(workflow_run.head_branch ?? '')}|${workflow_name}>`
+        : workflow_name;
     // Example: Success: AnthonyKinson's `push` on `master` for pull_request
     let status_string = `${workflow_msg} ${github_1.context.actor}'s \`${event_name}\` on \`${branch_url}\``;
     // Example: Workflow: My Workflow #14 completed in `1m 30s`
-    const details_string = `Workflow: ${workflow_name} ${workflow_run_url} completed in \`${workflow_duration}\``;
+    const details_string = `Workflow: ${workflow_name_link} ${workflow_run_url} completed in \`${workflow_duration}\``;
     // Build Pull Request string if required
     const pull_requests = workflow_run.pull_requests
         .filter(pull_request => pull_request.base.repo.url === workflow_run.repository.url // exclude PRs from external repositories

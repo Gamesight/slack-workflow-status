@@ -253,6 +253,30 @@ describe('main()', () => {
     expect(state.listJobsCalls[0]).toMatchObject({per_page: 75})
   })
 
+  it('hyperlinks the workflow name to its history filtered by branch (#59)', async () => {
+    state.workflowRun = makeWorkflowRun({
+      path: '.github/workflows/release.yml',
+      head_branch: 'feature/foo bar'
+    })
+    state.jobs = [makeJob({conclusion: 'success'})]
+
+    await main()
+
+    expect(attachment().text).toContain(
+      '<https://github.com/owner/repo/actions/workflows/release.yml?query=branch%3Afeature%2Ffoo%20bar|CI>'
+    )
+  })
+
+  it('falls back to plain workflow name when path is missing', async () => {
+    state.workflowRun = makeWorkflowRun({path: ''})
+    state.jobs = [makeJob({conclusion: 'success'})]
+
+    await main()
+
+    expect(attachment().text).toMatch(/Workflow: CI /)
+    expect(attachment().text).not.toContain('actions/workflows/')
+  })
+
   describe('hide_job_statuses', () => {
     it('hides skipped jobs while keeping success/failure visible (#55)', async () => {
       state.inputs.hide_job_statuses = 'skipped'
@@ -380,8 +404,8 @@ describe('main()', () => {
       expect(state.listJobsCalls[0]).toMatchObject({run_id: 1234567})
       const text = attachment().text
       expect(text).toContain('`pull_request`')
-      expect(text).toContain('Workflow: Upstream CI')
-      expect(text).not.toContain('Workflow: Notify')
+      expect(text).toMatch(/Workflow: <[^|]+\|Upstream CI>/)
+      expect(text).not.toContain('|Notify>')
     })
 
     it('uses context.runId when workflow_run input is false (default)', async () => {
@@ -395,7 +419,7 @@ describe('main()', () => {
 
       expect(state.getWorkflowRunCalls[0]).toMatchObject({run_id: 42})
       expect(state.listJobsCalls[0]).toMatchObject({run_id: 42})
-      expect(attachment().text).toContain('Workflow: CI')
+      expect(attachment().text).toMatch(/Workflow: <[^|]+\|CI>/)
     })
 
     it('throws when workflow_run is true but payload.workflow_run is absent', async () => {
