@@ -95,6 +95,7 @@ export function makeWorkflowRun(
 
 export const DEFAULT_INPUTS: Record<string, string> = {
   slack_webhook_url: 'https://hooks.slack.example/T/B/xyz',
+  slack_bot_token: '',
   repo_token: 'ghp_faketoken',
   jobs_to_fetch: '30',
   include_jobs: 'true',

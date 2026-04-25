@@ -527,4 +527,142 @@ describe('main()', () => {
       'https://hooks.slack.example/T/B/xyz'
     )
   })
+
+  describe('bot token mode (#40)', () => {
+    function useBotToken(token = 'xoxb-test-token'): void {
+      // Drop the default webhook so the validator picks the bot-token branch.
+      state.inputs.slack_webhook_url = ''
+      state.inputs.slack_bot_token = token
+      state.inputs.channel = '#release'
+    }
+
+    it('posts via chat.postMessage with the same attachment shape', async () => {
+      useBotToken()
+      state.jobs = [makeJob({name: 'build', conclusion: 'success'})]
+
+      await main()
+
+      expect(state.botTokens).toEqual(['xoxb-test-token'])
+      expect(state.apiCalls).toEqual(['chat.postMessage'])
+      const p = state.slackPayloads[0] as {
+        channel: string
+        text: string
+        attachments: SlackAttachment[]
+      }
+      expect(p.channel).toBe('#release')
+      // chat.postMessage requires top-level text for notifications/a11y.
+      expect(p.text).toMatch(/^Success:/)
+      expect(p.attachments).toHaveLength(1)
+      expect(p.attachments[0].color).toBe('good')
+      expect(p.attachments[0].fields).toHaveLength(1)
+      expect(p.attachments[0].fields[0].value).toContain('build')
+    })
+
+    it('forwards channel, username, icon_emoji, icon_url', async () => {
+      useBotToken()
+      state.inputs.channel = '#deploys'
+      state.inputs.name = 'WorkflowBot'
+      state.inputs.icon_emoji = ':rocket:'
+      state.inputs.icon_url = 'https://example.com/icon.png'
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      await main()
+
+      const p = state.slackPayloads[0] as {
+        channel: string
+        username: string
+        icon_emoji: string
+        icon_url: string
+      }
+      expect(p.channel).toBe('#deploys')
+      expect(p.username).toBe('WorkflowBot')
+      expect(p.icon_emoji).toBe(':rocket:')
+      expect(p.icon_url).toBe('https://example.com/icon.png')
+    })
+
+    it('accepts a user ID as channel for DMs', async () => {
+      useBotToken()
+      state.inputs.channel = 'U01ABCDEF'
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      await main()
+
+      const p = state.slackPayloads[0] as {channel: string}
+      expect(p.channel).toBe('U01ABCDEF')
+    })
+
+    it('configures the WebClient with the five-in-five retry policy', async () => {
+      useBotToken()
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      await main()
+
+      expect(state.webClientOptions[0]).toMatchObject({
+        retryConfig: {__sentinel: 'five-in-five'}
+      })
+    })
+
+    it('marks the bot token as a secret', async () => {
+      useBotToken('xoxb-secret-1')
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      await main()
+
+      expect(state.setSecretCalls).toContain('xoxb-secret-1')
+    })
+
+    it('reads SLACK_BOT_TOKEN from env when input is empty', async () => {
+      state.inputs.slack_webhook_url = ''
+      state.inputs.slack_bot_token = ''
+      state.inputs.channel = '#release'
+      process.env.SLACK_BOT_TOKEN = 'xoxb-from-env'
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      try {
+        await main()
+        expect(state.botTokens).toEqual(['xoxb-from-env'])
+      } finally {
+        delete process.env.SLACK_BOT_TOKEN
+      }
+    })
+
+    it('does not invoke the webhook path', async () => {
+      useBotToken()
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      await main()
+
+      expect(state.webhookUrls).toEqual([])
+    })
+
+    it('throws when both slack_bot_token and slack_webhook_url are set', async () => {
+      state.inputs.slack_bot_token = 'xoxb-test'
+      // slack_webhook_url retains its default value.
+      state.inputs.channel = '#x'
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      await expect(main()).rejects.toThrow(/not both/)
+    })
+
+    it('throws when neither slack_bot_token nor slack_webhook_url is set', async () => {
+      state.inputs.slack_webhook_url = ''
+      state.inputs.slack_bot_token = ''
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      await expect(main()).rejects.toThrow(
+        /Either slack_bot_token or slack_webhook_url is required/
+      )
+    })
+
+    it('throws when slack_bot_token is set but channel is empty', async () => {
+      state.inputs.slack_webhook_url = ''
+      state.inputs.slack_bot_token = 'xoxb-test'
+      state.inputs.channel = ''
+      state.jobs = [makeJob({conclusion: 'success'})]
+
+      await expect(main()).rejects.toThrow(
+        /channel is required when slack_bot_token is used/
+      )
+    })
+  })
 })

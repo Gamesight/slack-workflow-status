@@ -9,10 +9,24 @@ inputs:
     description: 'You must manually pass in secrets.GITHUB_TOKEN'
     required: true
   slack_webhook_url:
-    description: 'Your slack webhook url'
-    required: true
+    description: |
+      Slack Incoming Webhook URL. Provide either this or `slack_bot_token`
+      (not both). Recommended via `${{secrets.SLACK_WEBHOOK_URL}}`.
+    required: false
+  slack_bot_token:
+    description: |
+      Slack Bot User OAuth Token (`xoxb-…`) for posting via the Web API.
+      Provide either this or `slack_webhook_url` (not both). When set,
+      `channel` is required. The Slack app needs `chat:write` (and
+      `chat:write.public` to post in channels the bot isn't a member of).
+      Falls back to the `SLACK_BOT_TOKEN` env var when this input is empty.
+    required: false
   channel:
-    description: 'Override the default channel configured by the SLACK_WEBHOOK_URL'
+    description: |
+      Where to post the notification. With `slack_webhook_url`, overrides
+      the default channel attached to the webhook (workspace permitting).
+      With `slack_bot_token`, this is required and accepts a channel name
+      (`#release`), channel ID (`C0123…`), or user ID (`U0123…`) for DMs.
     required: false
   name:
     description: 'Override the default name configured by the Slack SLACK_WEBHOOK_URL'

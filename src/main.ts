@@ -15,6 +15,7 @@ import * as core from '@actions/core'
 import {context, getOctokit} from '@actions/github'
 import {IncomingWebhook} from '@slack/webhook'
 import {MessageAttachment} from '@slack/types'
+import {WebClient, retryPolicies} from '@slack/web-api'
 
 // HACK: https://github.com/octokit/types.ts/issues/205
 interface PullRequest {
@@ -52,9 +53,9 @@ if (require.main === module) {
 // Action entrypoint
 export async function main(): Promise<void> {
   // Collect Action Inputs
-  const webhook_url = core.getInput('slack_webhook_url', {
-    required: true
-  })
+  const webhook_url = core.getInput('slack_webhook_url')
+  const bot_token =
+    core.getInput('slack_bot_token') || process.env.SLACK_BOT_TOKEN || ''
   const github_token = core.getInput('repo_token', {required: true})
   const jobs_to_fetch = core.getInput('jobs_to_fetch', {required: true})
   const include_jobs = core.getInput('include_jobs', {
@@ -75,9 +76,25 @@ export async function main(): Promise<void> {
   const slack_emoji = core.getInput('icon_emoji') // https://www.webfx.com/tools/emoji-cheat-sheet/
   const extra_text = core.getInput('extra_text')
   const from_workflow_run = core.getInput('workflow_run') === 'true'
+
+  // Validate auth inputs: exactly one of webhook_url / bot_token. Mirrors
+  // slackapi/slack-github-action's Config.validate three-branch pattern.
+  if (webhook_url && bot_token) {
+    throw new Error(
+      'Either slack_bot_token or slack_webhook_url is required — not both.'
+    )
+  }
+  if (!webhook_url && !bot_token) {
+    throw new Error('Either slack_bot_token or slack_webhook_url is required.')
+  }
+  if (bot_token && !slack_channel) {
+    throw new Error('channel is required when slack_bot_token is used.')
+  }
+
   // Force as secret, forces *** when trying to print or log values
   core.setSecret(github_token)
-  core.setSecret(webhook_url)
+  if (webhook_url) core.setSecret(webhook_url)
+  if (bot_token) core.setSecret(bot_token)
   // Auth github with octokit module
   const octokit = getOctokit(github_token)
 
@@ -268,10 +285,31 @@ export async function main(): Promise<void> {
     ...(slack_icon && {icon_url: slack_icon})
   }
 
-  const slack_webhook = new IncomingWebhook(webhook_url)
-
   try {
-    await slack_webhook.send(slack_payload_body)
+    if (bot_token) {
+      // Web API path: post via chat.postMessage. Reuse the same attachment
+      // shape so rendering matches the webhook path. `text` is required
+      // here for notifications/screen readers (webhooks don't require it).
+      const client = new WebClient(bot_token, {
+        retryConfig: retryPolicies.fiveRetriesInFiveMinutes
+      })
+      // The strict union types on `chat.postMessage` (icon_emoji vs icon_url
+      // are mutually-exclusive `never`-guarded branches) reject our
+      // conditional spread even when the result is valid. slackapi's action
+      // routes through `apiCall` for the same reason.
+      const args: Record<string, unknown> = {
+        channel: slack_channel,
+        text: status_string,
+        attachments: [slack_attachment]
+      }
+      if (slack_name) args.username = slack_name
+      if (slack_emoji) args.icon_emoji = slack_emoji
+      if (slack_icon) args.icon_url = slack_icon
+      await client.apiCall('chat.postMessage', args)
+    } else {
+      const slack_webhook = new IncomingWebhook(webhook_url)
+      await slack_webhook.send(slack_payload_body)
+    }
   } catch (err) {
     if (err instanceof Error) {
       core.setFailed(err.message)

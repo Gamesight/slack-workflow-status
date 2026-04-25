@@ -1,3 +1,6 @@
+// Strip env-var fallbacks before tests run so the host shell can't leak in.
+delete process.env.SLACK_BOT_TOKEN
+
 jest.mock('@actions/core', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const {state} = require('./state')
@@ -57,4 +60,32 @@ jest.mock('@slack/webhook', () => {
     }
   }
   return {IncomingWebhook}
+})
+
+jest.mock('@slack/web-api', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const {state} = require('./state')
+  class WebClient {
+    constructor(token: string, options?: Record<string, unknown>) {
+      state.botTokens.push(token)
+      state.webClientOptions.push(options ?? {})
+    }
+    async apiCall(
+      method: string,
+      payload: Record<string, unknown>
+    ): Promise<{ok: boolean}> {
+      if (state.sendShouldReject) {
+        throw state.sendShouldReject
+      }
+      state.apiCalls.push(method)
+      state.slackPayloads.push(payload)
+      return {ok: true}
+    }
+  }
+  return {
+    WebClient,
+    retryPolicies: {
+      fiveRetriesInFiveMinutes: {retries: 5, __sentinel: 'five-in-five'}
+    }
+  }
 })
