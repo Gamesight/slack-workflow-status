@@ -641,10 +641,7 @@ describe('main()', () => {
 
     it('reports Success when conclusion is null and all completed jobs succeeded', async () => {
       state.workflowRun = makeWorkflowRun({conclusion: null})
-      state.jobs = [
-        makeJob({name: 'build', conclusion: 'success'}),
-        makeJob({name: 'deploy', conclusion: 'success'})
-      ]
+      state.jobs = [makeJob({name: 'build', conclusion: 'success'}), makeJob({name: 'deploy', conclusion: 'success'})]
 
       await main()
 
@@ -655,10 +652,7 @@ describe('main()', () => {
 
     it('reports Failed when conclusion is null and any job failed', async () => {
       state.workflowRun = makeWorkflowRun({conclusion: null})
-      state.jobs = [
-        makeJob({name: 'build', conclusion: 'success'}),
-        makeJob({name: 'deploy', conclusion: 'failure'})
-      ]
+      state.jobs = [makeJob({name: 'build', conclusion: 'success'}), makeJob({name: 'deploy', conclusion: 'failure'})]
 
       await main()
 
