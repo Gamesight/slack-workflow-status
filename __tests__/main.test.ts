@@ -75,6 +75,19 @@ describe('main()', () => {
     expect(failed?.value).toContain('✗')
   })
 
+  it('reports Failed when failure and cancelled coexist (matrix fail-fast, #58)', async () => {
+    state.jobs = [
+      makeJob({name: 'shard-1', conclusion: 'failure'}),
+      makeJob({name: 'shard-2', conclusion: 'cancelled'}),
+    ]
+
+    await main()
+
+    const a = attachment()
+    expect(a.color).toBe('danger')
+    expect(a.text).toMatch(/^Failed:/)
+  })
+
   it('reports cancelled when any job is cancelled', async () => {
     state.jobs = [
       makeJob({name: 'build', conclusion: 'success'}),

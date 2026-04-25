@@ -13593,17 +13593,20 @@ function main() {
                 job_fields = [];
             }
         }
-        else if (completed_jobs.some(job => job.conclusion === 'cancelled')) {
+        else if (completed_jobs.some(job => !['success', 'skipped', 'cancelled'].includes(job.conclusion))) {
+            // Any conclusion outside success/skipped/cancelled (failure, timed_out,
+            // action_required, neutral, stale, ...) wins over a sibling cancellation:
+            // matrix fail-fast cancels still-running jobs but the workflow really did
+            // fail. Issue #58.
+            workflow_color = 'danger';
+            workflow_msg = 'Failed:';
+        }
+        else {
             workflow_color = 'warning';
             workflow_msg = 'Cancelled:';
             if (include_jobs === 'on-failure') {
                 job_fields = [];
             }
-        }
-        else {
-            // (jobs_response.jobs.some(job => job.conclusion === 'failed')
-            workflow_color = 'danger';
-            workflow_msg = 'Failed:';
         }
         if (include_jobs === 'false') {
             job_fields = [];
