@@ -98,6 +98,7 @@ export const DEFAULT_INPUTS: Record<string, string> = {
   include_jobs: 'true',
   hide_job_statuses: '',
   include_commit_message: 'false',
+  extra_text: '',
   channel: '',
   name: '',
   icon_url: '',

@@ -267,6 +267,43 @@ describe('main()', () => {
     )
   })
 
+  it('appends extra_text to the message body when set', async () => {
+    state.inputs.extra_text =
+      'Deploy: https://example.com/release/42 cc <!channel>'
+    state.jobs = [makeJob({conclusion: 'success'})]
+
+    await main()
+
+    expect(attachment().text).toContain(
+      'Deploy: https://example.com/release/42 cc <!channel>'
+    )
+  })
+
+  it('omits extra_text when unset', async () => {
+    state.jobs = [makeJob({conclusion: 'success'})]
+
+    await main()
+
+    const lines = attachment().text.split('\n')
+    expect(lines).toHaveLength(2)
+  })
+
+  it('places extra_text after the commit message when both are set', async () => {
+    state.inputs.include_commit_message = 'true'
+    state.inputs.extra_text = 'extra context line'
+    state.workflowRun = makeWorkflowRun({
+      head_commit: {message: 'fix: a bug'}
+    })
+    state.jobs = [makeJob({conclusion: 'success'})]
+
+    await main()
+
+    const text = attachment().text
+    expect(text.indexOf('Commit: fix: a bug')).toBeLessThan(
+      text.indexOf('extra context line')
+    )
+  })
+
   it('falls back to plain workflow name when path is missing', async () => {
     state.workflowRun = makeWorkflowRun({path: ''})
     state.jobs = [makeJob({conclusion: 'success'})]

@@ -34,6 +34,13 @@ inputs:
       color/text still reflects all jobs. Default is "" (no filtering).
     required: false
     default: ''
+  extra_text:
+    description: |
+      Free-form text appended to the notification body. Useful for adding a
+      deploy URL, ticket link, channel mention, or any other context that
+      should travel with the message. Default is "" (nothing appended).
+    required: false
+    default: ''
   include_commit_message:
     description: 'Should the slack notification include the head commit message'
     required: true

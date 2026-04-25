@@ -34738,6 +34738,7 @@ async function main() {
     const slack_name = core.getInput('name');
     const slack_icon = core.getInput('icon_url');
     const slack_emoji = core.getInput('icon_emoji'); // https://www.webfx.com/tools/emoji-cheat-sheet/
+    const extra_text = core.getInput('extra_text');
     const from_workflow_run = core.getInput('workflow_run') === 'true';
     // Force as secret, forces *** when trying to print or log values
     core.setSecret(github_token);
@@ -34867,6 +34868,7 @@ async function main() {
         color: workflow_color,
         text: [status_string, details_string]
             .concat(include_commit_message ? [commit_message] : [])
+            .concat(extra_text ? [extra_text] : [])
             .join('\n'),
         footer: repo_url,
         footer_icon: 'https://github.githubassets.com/favicon.ico',
