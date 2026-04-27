@@ -22,7 +22,7 @@ This action will post workflow status notifications into your Slack channel. The
 | **name**                   | _optional_ | Allows you to provide a name for the slack bot user posting the notifications. Overrides the default name created with your webhook.
 | **icon_emoji**             | _optional_ | Allows you to provide an emoji as the slack bot user image when posting notifications. Overrides the default image created with your webhook. _[Emoji Code Cheat Sheet](https://www.webfx.com/tools/emoji-cheat-sheet/)_
 | **icon_url**               | _optional_ | Allows you to provide a URL for an image to use as the slack bot user image when posting notifications. Overrides the default image created with your webhook.
-| **workflow_run**           | _optional_ | Set to `"true"` when this action runs in a workflow triggered by the `workflow_run` event. The notification will then describe the upstream workflow that fired the event rather than this notifier workflow itself. Default is `"false"`.
+| **workflow_run**           | _optional_ | Set to `"true"` when this action runs in a workflow triggered by the `workflow_run` event. The notification will then describe the upstream workflow that fired the event rather than this notifier workflow itself. Default is `"false"`. See [Reporting on Another Workflow](#reporting-on-another-workflow-workflow_run).
 
 
 ## Usage
@@ -74,7 +74,18 @@ This action can also be used for Pull Request workflows and will include pull re
 
 <img src="./docs/images/example-pr.png" title="Slack Pull Request Example">
 
-### Posting with a Slack Bot Token
+## Notification Patterns
+
+This action supports two ways of sending Slack notifications:
+
+| Pattern | When to use |
+|---|---|
+| **In-same-workflow** (default — see [Usage](#usage) above) | Simple workflows where the notifier job can run after the rest. Good for the common case. |
+| **`workflow_run`-triggered** (separate workflow, set `workflow_run: 'true'`) | Required when (a) the upstream workflow uses `continue-on-error: true` at the **job** level, (b) the upstream is triggered by `pull_request` from forks (token isolation), or (c) you need the upstream's _final_ conclusion — the in-same-workflow pattern reports while the workflow is still mid-flight. See [Reporting on Another Workflow](#reporting-on-another-workflow-workflow_run). |
+
+If you're not sure which to use: start with the in-same-workflow pattern. Switch to the `workflow_run` pattern if Slack starts reporting `Failed:` for runs that the GitHub UI shows as `Success` — that's the signal that you've hit one of the cases above.
+
+## Posting with a Slack Bot Token
 
 If your workspace has Incoming Webhooks disabled, or you want a single
 credential that can post to many channels (and DMs), use a Bot User OAuth
@@ -97,7 +108,69 @@ invited to).
 Provide **either** `slack_webhook_url` **or** `slack_bot_token` — setting
 both is rejected.
 
+## Reporting on Another Workflow (`workflow_run`)
+
+When you need the upstream workflow's _final_ conclusion — including for workflows with job-level `continue-on-error: true`, or for runs from fork PRs — put the notifier in its own workflow and trigger it on `workflow_run`.
+
+**`.github/workflows/ci.yml`** — your real CI (no Slack step):
+
+```yaml
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm test
+  experimental:
+    runs-on: ubuntu-latest
+    # OK to use here — the notifier (in the other workflow) sees the
+    # workflow's true success/failure conclusion, not this job's.
+    continue-on-error: true
+    steps:
+      - run: ./run-experimental.sh
+```
+
+**`.github/workflows/notify.yml`** — the notifier:
+
+```yaml
+name: Notify Slack
+on:
+  workflow_run:
+    workflows: ['CI']           # match by upstream workflow name
+    types: [completed]
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read              # read the upstream run's jobs
+      contents: read             # read the upstream run metadata
+    steps:
+      - uses: Gamesight/slack-workflow-status@master
+        with:
+          repo_token: ${{secrets.GITHUB_TOKEN}}
+          slack_webhook_url: ${{secrets.SLACK_WEBHOOK_URL}}
+          workflow_run: 'true'   # report on the upstream, not this run
+```
+
+Why this is more accurate than the in-same-workflow pattern:
+
+- The notifier runs **after** the upstream workflow has fully concluded, so `workflow_run.conclusion` is a real value (`success`/`failure`/`cancelled`).
+- Job-level `continue-on-error: true` is honored — failed experimental jobs that the workflow forgave do not flip the notification to `Failed:`.
+- Matrix expansions, reusable workflows, and expression-evaluated `continue-on-error` all work, since we're reading the workflow's own decision rather than inferring from job conclusions.
+- For PRs from forks: the in-same-workflow notifier doesn't have access to repository secrets (so `slack_webhook_url` is empty). The `workflow_run`-triggered notifier runs in the _base_ repository's context and can read secrets normally.
+
 ## Troubleshooting
+
+### Slack reports `Failed:` but the GitHub UI shows `Success`
+
+This usually means the notifier is running _inside_ the same workflow it's reporting on, while the upstream uses `continue-on-error: true` at the **job** level. The notifier scans completed jobs at a moment when the workflow's own conclusion isn't decided yet (the notifier itself hasn't finished), and a forgiven job's failure looks like a real failure to it.
+
+Switch to the [`workflow_run` pattern](#reporting-on-another-workflow-workflow_run) — the notifier runs after the upstream concludes and gets the real `success`/`failure` value, so `continue-on-error` is honored.
 
 ### `Resource not accessible by integration`
 
